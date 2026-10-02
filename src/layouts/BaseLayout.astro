@@ -174,13 +174,20 @@ const measure =
 
         document.addEventListener('DOMContentLoaded', () => {
           const button = document.getElementById('theme-toggle');
-          const label = button?.querySelector('[data-theme-label]');
-          if (!button || !label) return;
+          if (!button) return;
 
           const paint = () => {
-            // The label names the theme the button switches TO.
+            /*
+             * `aria-label` is the button's ONLY name -- the glyph inside it is
+             * aria-hidden. It names the theme the button switches TO, which
+             * only the resolved theme knows.
+             *
+             * There is no visible label to keep in step any more. When there
+             * was, this also wrote its text, and that element was part of the
+             * guard above: dropping the span without dropping the lookup would
+             * have returned early and left the toggle `hidden` forever.
+             */
             const next = resolved() === 'dark' ? 'light' : 'dark';
-            label.textContent = next;
             button.setAttribute('aria-label', `Switch to ${next} theme`);
           };
 

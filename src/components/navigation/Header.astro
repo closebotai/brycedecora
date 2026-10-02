@@ -9,19 +9,27 @@
  * primary links fit on a small screen unaided, so there is nothing to
  * disclose, let alone anything needing JS to disclose it.
  *
- * THE SOCIAL ROW IS HIDDEN BELOW `md`, AND THAT IS THE REASON THE ABOVE STILL
- * HOLDS. Five links plus a wordmark and a toggle do not fit on a 375px phone;
- * they wrap to three lines, and this header is `sticky`, so those lines would
- * eat a fixed slice of every viewport on every page for the whole scroll. The
- * profiles are supplementary and the footer carries the same three on every
- * page, so hiding them narrow costs a phone user nothing and keeps the header
- * one line. No content is lost, which is what makes `display: none` honest
- * here rather than a dodge.
+ * THE SOCIAL ROW USED TO BE HIDDEN BELOW `md`, AND NOW IT IS NOT. As words --
+ * "LINKEDIN INSTAGRAM FACEBOOK" -- it cost about 250px and wrapped a 375px
+ * phone to three lines, so it was hidden, and a phone reader never saw the
+ * profiles at all. That was the honest trade at the time and it was also the
+ * wrong outcome: supplementary is not the same as invisible.
+ *
+ * As glyphs the same three cost 80px, and the theme toggle giving up its
+ * "DARK"/"LIGHT" text freed another 31px. The header now holds all of it on
+ * ONE line from 375px up, which covers every current iPhone and Pixel. Below
+ * that -- 360px Androids and the 320px long tail -- it wraps to two lines,
+ * 72px instead of 51px, and the socials still show. That is a deliberate
+ * choice to spend 21px of sticky chrome rather than hide the links again.
+ *
+ * EVERY BREAKPOINT IN THIS FILE IS MEASURED, NOT GUESSED, and the numbers go
+ * stale the moment a label changes. Re-measure before trusting one.
  *
  * If the PRIMARY nav ever outgrows its line, the next step is a native
  * <details>/<summary> disclosure -- still zero JS. An island is the last
  * resort, not the first.
  */
+import SocialIcon from '../ui/SocialIcon.astro';
 import ThemeToggle from '../ui/ThemeToggle.astro';
 import { primaryNav } from '../../data/navigation';
 import { person } from '../../data/person';
@@ -44,7 +52,7 @@ const current = Astro.url.pathname;
 */}
 <header class="sticky top-0 z-50 border-b border-line bg-surface">
   <div
-    class="mx-auto flex max-w-wide flex-wrap items-center justify-between gap-4 px-gutter py-3"
+    class="mx-auto flex max-w-wide flex-wrap items-center justify-between gap-x-2 gap-y-2 px-gutter py-3 md:gap-x-4"
   >
     <a
       href="/"
@@ -53,9 +61,9 @@ const current = Astro.url.pathname;
       {SITE_NAME}
     </a>
 
-    <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
+    <div class="flex flex-wrap items-center gap-x-2 gap-y-2 md:gap-x-6">
       <nav aria-label="Primary">
-        <ul class="flex flex-wrap items-center gap-x-6 gap-y-2">
+        <ul class="flex flex-wrap items-center gap-x-3 gap-y-2 md:gap-x-6">
         {
           primaryNav.map((item) => {
             const active = isActivePath(item.href, current);
@@ -86,7 +94,12 @@ const current = Astro.url.pathname;
 
       {
         /*
-          Hidden below `md` -- see the note at the top of this file.
+          Visible at every width -- see the note at the top of this file for
+          why these are glyphs rather than the words they replaced.
+
+          The hairline separator and its padding are `md` and up only: on a
+          phone that 24px of inset is the difference between one line and two,
+          and at that width the icons read as a group without help.
 
           Separated from the primary nav by an ink hairline rather than by
           extra space. DESIGN.md says to separate with whitespace first and
@@ -106,19 +119,17 @@ const current = Astro.url.pathname;
       }
       {
         person.socialProfiles.length > 0 && (
-          <nav
-            aria-label="Social profiles"
-            class="hidden md:block md:border-l md:border-line md:pl-6"
-          >
-            <ul class="flex items-center gap-x-6">
+          <nav aria-label="Social profiles" class="md:border-l md:border-line md:pl-6">
+            <ul class="flex items-center gap-x-1 md:gap-x-2">
               {person.socialProfiles.map((profile) => (
                 <li>
                   <a
                     href={profile.url}
                     rel="me noopener"
-                    class="font-mono text-kicker tracking-[0.08em] text-ink-muted uppercase no-underline hover:text-accent-hover"
+                    class="flex h-6 w-6 items-center justify-center text-ink-muted no-underline hover:text-accent-hover"
                   >
-                    {profile.label}
+                    <SocialIcon name={profile.label} />
+                    <span class="sr-only">{profile.label}</span>
                   </a>
                 </li>
               ))}
@@ -139,13 +150,16 @@ const current = Astro.url.pathname;
           every button". Colour comes from `.kicker` plus a `text-ink`
           override, the same move as ThemeToggle.
 
-          HIDDEN BELOW `lg`, AND THE BREAKPOINT IS MEASURED. At `md` the header
-          went from 51px to 80px at exactly 768px: wordmark, two nav links,
-          three socials, this and the toggle do not fit an iPad in portrait, so
-          it wrapped. The header is sticky, so that second line costs a fixed
-          slice of every viewport on every page. It fits from ~820px; `lg` is
-          the nearest standard stop with headroom. The footer carries the same
-          destination at every width, which is what makes hiding it honest.
+          HIDDEN BELOW `md`, AND THE BREAKPOINT IS MEASURED. It used to be
+          `lg`, because the socials were three WORDS at roughly 250px and this
+          button pushed 768px to a second line. They are glyphs now, at 113px,
+          and the toggle lost its text as well, so 768px went from 0px of slack
+          to 315px and the old reason stopped being true. Measured again rather
+          than inherited.
+
+          Below `md` it still does not fit, and the footer carries the same
+          destination at every width, which is what makes hiding it honest. On
+          a phone the homepage hero carries it too.
 
           It points at /open-source/, not at GitHub; that file's header
           explains why.
@@ -153,7 +167,7 @@ const current = Astro.url.pathname;
       }
       <a
         href="/open-source/"
-        class="kicker hidden border border-line px-3 py-1 text-ink no-underline lg:inline-block hover:border-accent hover:text-accent-hover"
+        class="kicker hidden border border-line px-3 py-1 text-ink no-underline md:inline-block hover:border-accent hover:text-accent-hover"
       >
         Fork this site
       </a>

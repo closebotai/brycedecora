@@ -14,23 +14,29 @@
  * a correct dark theme from `prefers-color-scheme` -- they simply cannot
  * override it, so they are not offered a switch that cannot move.
  *
- * The label is set by the bootstrap too, since it names the theme the button
- * switches TO and only the resolved theme knows which that is.
+ * AN ICON, NOT THE WORD "DARK"/"LIGHT". The label used to be visible text, and
+ * it cost 55px in a header that had 13px of room left on a 360px phone. Making
+ * it a 24px glyph is what buys the social icons their place on mobile.
  *
- * THE BUTTON IS SIZED TO ITS WIDEST LABEL, NOT TO ITS CURRENT ONE. The label
- * alternates between "light" and "dark", and those are different widths, so
- * the button used to resize on every click and shove the rest of the header
- * row sideways -- a layout shift the user causes, on a sticky element, on
- * every page.
+ * THAT ALSO DELETED A WHOLE CLASS OF BUG. The visible label alternated between
+ * two words of different widths, so the button resized on every click and
+ * shoved the rest of a sticky header sideways. The old fix was an invisible
+ * second label stacked in the same grid cell, sizing the button to its widest
+ * state. A fixed-size icon cannot do that at all, so the sizer, the grid, and
+ * the note explaining why `ch` units were wrong are all gone with it.
  *
- * It is done with an invisible sizer rather than a fixed width or a `ch`
- * measurement. A hard-coded width goes wrong the moment the label or the
- * tracking changes; `ch` is only exact while the text is genuinely monospaced,
- * and the mono face is deliberately NOT preloaded (see AGENTS.md), so early in
- * the page's life this renders in a proportional fallback where `ch` would
- * measure the wrong thing. Stacking both labels in one grid cell makes the
- * button as wide as the longer string under whatever font is actually
- * resolved, with no arithmetic to get stale.
+ * The accessible name is NOT here. The bootstrap sets `aria-label` to "Switch
+ * to dark theme" or "Switch to light theme", because only the resolved theme
+ * knows which direction the button goes. `aria-label` on a button overrides
+ * its contents, so the glyph is `aria-hidden` and there is deliberately no
+ * visually-hidden text -- a second name would simply never be announced.
+ *
+ * THE GLYPH IS A SQUARE, NOT THE USUAL SUN AND MOON. DESIGN.md allows exactly
+ * one radius in the system and it is the 2px focus ring; a circular contrast
+ * icon would be the only round piece of our own chrome on the site. A square
+ * split half-filled reads as the same "contrast" idea in the house material.
+ * The third-party social marks keep their curves because altering a trademark
+ * is not ours to do -- this is our own control, so it follows our own rules.
  */
 ---
 
@@ -38,15 +44,10 @@
   type="button"
   id="theme-toggle"
   hidden
-  class="kicker cursor-pointer border border-line px-2 py-1 text-ink hover:text-accent-hover"
+  class="flex h-6 w-6 cursor-pointer items-center justify-center border border-line text-ink hover:border-accent hover:text-accent-hover"
 >
-  <span class="grid">
-    {/*
-      Both spans occupy the same grid cell, so the cell takes the width of the
-      wider one. `invisible` is visibility:hidden, which still reserves space --
-      `hidden` would collapse it and defeat the whole point.
-    */}
-    <span class="col-start-1 row-start-1" data-theme-label>Theme</span>
-    <span class="invisible col-start-1 row-start-1" aria-hidden="true">Light</span>
-  </span>
+  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" class="h-[12px] w-[12px]">
+    <path d="M2 2h20v20H2z" fill="none" stroke="currentColor" stroke-width="3" />
+    <path d="M12 2h10v20H12z" fill="currentColor" />
+  </svg>
 </button>
