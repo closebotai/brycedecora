@@ -20,7 +20,11 @@
  * CloseBot is disclosed in the prose, per AGENTS.md. An open-source page is
  * exactly where an undisclosed recommendation would read as promotion.
  */
+import { Image } from 'astro:assets';
+
 import PageLayout from '../layouts/PageLayout.astro';
+import chatWidget from '../assets/media/screenshot-2026-10-02-at-11-41-52-am.png';
+import widgetConversions from '../assets/media/screenshot-2026-10-02-at-11-39-52-am.png';
 import { person } from '../data/person';
 import { SOURCE_REPO_URL } from '../data/site';
 ---
@@ -35,21 +39,28 @@ import { SOURCE_REPO_URL } from '../data/site';
   lede="The code for this site is free. Take it. Change the name. It's yours."
   width="wide"
 >
-  <div class="lg:grid lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-x-16">
-    <div class="mb-10 lg:mb-0">
-      {/*
-        The repository link, in the slot the portrait fills on /about/. Someone
-        who clicked "Fork this site" already knows what they want. They should
-        not have to read anything to find it.
-      */}
-      <a
-        href={SOURCE_REPO_URL}
-        target="_blank"
-        rel="noopener"
-        class="inline-block border border-line px-4 py-2 font-mono text-kicker tracking-[0.08em] text-ink uppercase no-underline shadow-[3px_3px_0_var(--color-ink)] transition-colors duration-100 hover:border-accent hover:text-accent-hover"
-      >
-        View on GitHub<span class="sr-only"> (opens in a new tab)</span>
-      </a>
+  <Fragment slot="sidebar">
+    {/*
+      The repository link, in the slot the portrait fills on /about/. Someone
+      who clicked "Fork this site" already knows what they want. They should
+      not have to read anything to find it.
+
+      `.kicker` and `.panel-shadow` are the named classes from global.css, not
+      their Tailwind longhand. The longhand also had to re-declare
+      `tracking-[0.08em]`, which `text-kicker` already supplies, and
+      `transition-colors`, which the base layer already applies to every `a`
+      at 120ms linear -- Tailwind's version eases and covers properties
+      DESIGN.md's motion rule does not permit. `text-ink` overrides `.kicker`'s
+      muted colour, the same way ThemeToggle does.
+    */}
+    <a
+      href={SOURCE_REPO_URL}
+      target="_blank"
+      rel="noopener"
+      class="kicker panel-shadow inline-block border border-line px-4 py-2 text-ink no-underline hover:border-accent hover:text-accent-hover"
+    >
+      View on GitHub<span class="sr-only"> (opens in a new tab)</span>
+    </a>
 
       <dl class="mt-8 space-y-4">
         <div>
@@ -65,10 +76,9 @@ import { SOURCE_REPO_URL } from '../data/site';
           <dd class="text-small mt-1 text-ink">Just a domain</dd>
         </div>
       </dl>
-    </div>
+  </Fragment>
 
-    <div>
-      <div class="prose">
+  <div class="prose">
         {/*
           {' '} before and after an inline link is deliberate. A newline there
           collapses to nothing and renders as "throughClaude Code". It is
@@ -139,9 +149,55 @@ import { SOURCE_REPO_URL } from '../data/site';
         <p>
           <a href={person.worksFor.url} rel="noopener">{person.worksFor.name}</a>{' '}
           gives out a free Sales Pixel. Drop that one code into the site and you
-          get two things. A chat box that answers questions for you. And basic
-          numbers, like how many people came by.
+          get two things.
         </p>
+
+        <p>
+          The first is a chat box. It answers questions for people while you
+          sleep, and it can take their email for your newsletter.
+        </p>
+
+        {/*
+          EAGER, AND IT IS THE FIRST IMAGE ON THE PAGE. tests/seo/images.spec.ts
+          treats a document's first <img> as its likely LCP element and fails a
+          lazy one. This page is not an article, so it does not get the cover
+          exemption that rule carves out.
+
+          The heuristic is wrong here -- both images sit two thirds of the way
+          down -- but the honest fix is to teach the rule about above-the-fold
+          position, not to quietly exempt this page. Sized to the reading
+          column rather than the 1282px original, so eager costs little.
+        */}
+        <Image
+          src={chatWidget}
+          alt="The CloseBot chat widget open on this site, showing an AI assistant greeting a visitor and answering a message"
+          widths={[320, 480, 608]}
+          sizes="(max-width: 38rem) 100vw, 38rem"
+          loading="eager"
+          fetchpriority="high"
+          class="panel-shadow my-8 border border-line"
+        />
+
+        <p>
+          You can change how it looks without logging in to CloseBot. The
+          widget's styling lives in a file in this project, so an AI tool can
+          edit it. I had Claude Code restyle mine to match the site. Square
+          corners, my colors, no blue bubble.
+        </p>
+
+        <p>
+          The second is numbers. You can see which pages people actually land
+          on, and which ones get them to start a chat.
+        </p>
+
+        <Image
+          src={widgetConversions}
+          alt="A pie chart of chat conversions by page, with the home page the largest slice, followed by the writing index and the about page"
+          widths={[320, 480, 608]}
+          sizes="(max-width: 38rem) 100vw, 38rem"
+          loading="lazy"
+          class="panel-shadow my-8 border border-line"
+        />
 
         <p>
           You don't have to use it. Leave it blank and there's just no chat box.
@@ -179,7 +235,5 @@ import { SOURCE_REPO_URL } from '../data/site';
           Build something with it? I'd love to see it.{' '}
           <a href={`mailto:${person.email}`}>{person.email}</a>
         </p>
-      </div>
-    </div>
   </div>
 </PageLayout>

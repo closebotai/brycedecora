@@ -41,9 +41,8 @@ import { person } from '../data/person';
   lede="Co-founder and CEO of CloseBot. Former Boeing engineer, self-taught developer, and now someone whose software talks to a lot of strangers."
   width="wide"
 >
-  <div class="lg:grid lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-x-16">
-    <div class="mb-10 lg:mb-0">
-      {/*
+  <Fragment slot="sidebar">
+    {/*
         Framed as a print. The source photograph has a white studio
         background, which would read as a rendering mistake sitting on cream —
         the hairline and hard offset shadow make that white deliberate, so it
@@ -90,10 +89,9 @@ import { person } from '../data/person';
           </dd>
         </div>
       </dl>
-    </div>
+  </Fragment>
 
-    <div>
-      <div class="prose">
+  <div class="prose">
         <p>
           I co-founded <a href={person.worksFor.url} rel="noopener">CloseBot</a>, an
           AI platform that qualifies leads and books appointments by having an
@@ -175,8 +173,5 @@ import { person } from '../data/person';
             ))
           }.
         </p>
-      </div>
-
-    </div>
   </div>
 </PageLayout>

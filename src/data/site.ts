@@ -19,7 +19,9 @@ export const SITE_URL = 'https://brycedecora.com';
 export const SITE_NAME = 'Bryce DeCora';
 
 /**
- * Where this site's source lives, for the "fork this site" action in the header.
+ * Where this site's source lives. Consumed by `/open-source/`, which is the
+ * single place the repository is linked from; the header and footer both point
+ * at that page rather than at GitHub.
  *
  * DELIBERATELY NOT IN `person.socialProfiles`. That array feeds schema.org
  * `sameAs`, which asserts "this URL is another profile of this same person".

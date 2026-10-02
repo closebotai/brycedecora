@@ -27,6 +27,22 @@ const display = register === 'display';
 const hasAside = display && Astro.slots.has('hero-aside');
 
 /*
+ * A narrow column beside the body, for pages that lead with facts rather than
+ * prose: the portrait and role list on /about/, the repository link and
+ * summary on /open-source/.
+ *
+ * Here rather than copied into each page because AGENTS.md is explicit --
+ * "no duplicated layout code; if two pages share structure, that is a layout".
+ * Both pages had the same grid, the same 14rem column and the same stacking
+ * rule written out by hand, so changing the column width meant remembering to
+ * change it twice.
+ *
+ * Same `slots.has` guard as `hero-aside` above, for the same reason: an empty
+ * slot would still open a second column on every page that does not pass one.
+ */
+const hasSidebar = Astro.slots.has('sidebar');
+
+/*
  * In 'full' the layout's own header has to restore the measure, since <main>
  * gives it neither max-width nor gutter.
  */
@@ -81,5 +97,23 @@ const headerMeasure = full ? 'mx-auto w-full max-w-wide px-gutter pt-12' : '';
     }
   </header>
 
-  <slot />
+  {
+    hasSidebar ? (
+      <div class="lg:grid lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-x-16">
+        {/*
+          mb-12 (48px), not the mb-10 both pages used before this was shared.
+          40px is not on DESIGN.md's spacing scale; baking an off-scale value
+          into a layout spreads it to every page that adopts the slot.
+        */}
+        <div class="mb-12 lg:mb-0">
+          <slot name="sidebar" />
+        </div>
+        <div>
+          <slot />
+        </div>
+      </div>
+    ) : (
+      <slot />
+    )
+  }
 </BaseLayout>

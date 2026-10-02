@@ -25,6 +25,13 @@ export const primaryNav: readonly NavItem[] = [
 export const footerNav: readonly NavItem[] = [
   { label: 'About', href: '/about/' },
   { label: 'Writing', href: '/writing/' },
+  /*
+   * The explainer for the public repository, and the one place the GitHub link
+   * lives. Footer-only: the header carries the same destination as a "Fork this
+   * site" action rather than as a nav item, because it is a call to action and
+   * is styled as one.
+   */
+  { label: 'Open source', href: '/open-source/' },
 ];
 
 /**

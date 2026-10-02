@@ -1,7 +1,7 @@
 {
   "ci": {
     "collect": {
-      "//": "These paths are hand-maintained and go stale the moment an article is renamed or unpublished -- which is exactly how this list ended up pointing at a deleted post and failing a build. tests/seo/lighthouse-urls.spec.ts asserts every path here exists in dist/, so the breakage now surfaces in the fast test job instead of after a three-run Lighthouse pass. The article chosen is the one carrying a cover image: it is the most demanding page for LCP, which is the number this budget exists to defend.",
+      "//": "These paths are hand-maintained and go stale the moment an article is renamed or unpublished -- which is exactly how this list ended up pointing at a deleted post and failing a build. tests/seo/lighthouse-urls.spec.ts asserts every path here exists in dist/, so the breakage now surfaces in the fast test job instead of after a three-run Lighthouse pass. Two pages are here specifically because they carry images and are therefore the most demanding for LCP, which is the number this budget exists to defend: the article with a cover, and /open-source/, whose first image is eager and sits below the fold. A page with images that nothing measures is how a performance regression ships.",
       "staticDistDir": "./dist",
       "numberOfRuns": 3,
       "url": [
@@ -9,6 +9,7 @@
         "/about/index.html",
         "/writing/index.html",
         "/writing/top-3-ai-softwares-i-use-daily/index.html",
+        "/open-source/index.html",
         "/404.html"
       ]
     },

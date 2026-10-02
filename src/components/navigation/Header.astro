@@ -129,47 +129,31 @@ const current = Astro.url.pathname;
 
       {
         /*
-          FORK THIS SITE. The one action in the header, and the only element
-          here that is not navigation.
+          FORK THIS SITE. The one call to action in the header, which is why it
+          is styled as a bordered box rather than carried in `primaryNav` with
+          the other links -- and why it has no `aria-current`. It is an action,
+          not a location.
 
-          IT IS A BORDERED LINK, NOT AN ACCENT-FILLED BUTTON. DESIGN.md keeps
-          the accent for links, the focus ring, a selected state and the
-          occasional marked phrase -- explicitly "not a button fill on every
-          button". A square hairline box is the house primitive for a bounded
-          thing, so it reads as an action without spending the accent on
-          chrome that sits on every page.
+          A BORDERED LINK, NOT AN ACCENT FILL. DESIGN.md keeps the accent for
+          links, the focus ring and a selected state, "not a button fill on
+          every button". Colour comes from `.kicker` plus a `text-ink`
+          override, the same move as ThemeToggle.
 
-          HIDDEN BELOW `lg`, NOT `md` -- a measured number, not a guess. The
-          social row hides below `md` (768px), and showing this there too
-          pushed the header from 51px to 80px at exactly 768px: wordmark, two
-          nav links, three socials, this, and the toggle do not fit an iPad in
-          portrait, so it wrapped to a second line. The header is sticky, so
-          that second line would have cost a fixed slice of every viewport for
-          the whole scroll on every page.
+          HIDDEN BELOW `lg`, AND THE BREAKPOINT IS MEASURED. At `md` the header
+          went from 51px to 80px at exactly 768px: wordmark, two nav links,
+          three socials, this and the toggle do not fit an iPad in portrait, so
+          it wrapped. The header is sticky, so that second line costs a fixed
+          slice of every viewport on every page. It fits from ~820px; `lg` is
+          the nearest standard stop with headroom. The footer carries the same
+          destination at every width, which is what makes hiding it honest.
 
-          It fits from about 820px, and `lg` (1024px) is the nearest standard
-          stop with enough headroom that a longer label does not silently
-          re-break it. Between 768 and 1024 the socials show and this does not.
-
-          That is only honest because nothing is lost: the repository is linked
-          from the footer on every page, at every width.
-
-          IT POINTS AT /open-source/, NOT AT GITHUB. A repository landing page
-          answers "what is this" badly for someone who has not already decided
-          they want it: it opens on a file tree. The explainer gives the
-          one-paragraph version and carries the GitHub link in its first
-          screen, so the person who wanted the repo loses one click and the
-          person who wanted an explanation gets one.
-
-          That also makes this an ordinary internal link -- no `target="_blank"`
-          and no new tab, which is the right default when a link keeps you on
-          the site.
+          It points at /open-source/, not at GitHub; that file's header
+          explains why.
         */
       }
       <a
         href="/open-source/"
-        aria-current={isActivePath('/open-source/', current) ? 'page' : undefined}
-        class="hidden lg:inline-block lg:border lg:border-line lg:px-3 lg:py-1 font-mono text-kicker tracking-[0.08em] text-ink uppercase no-underline transition-colors duration-100 hover:border-accent hover:text-accent-hover"
+        class="kicker hidden border border-line px-3 py-1 text-ink no-underline lg:inline-block hover:border-accent hover:text-accent-hover"
       >
         Fork this site
       </a>
