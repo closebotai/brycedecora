@@ -1,0 +1,55 @@
+MIT License
+
+Copyright (c) 2026 Bryce DeCora
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+CONTENT AND LIKENESS -- NOT COVERED BY THE MIT LICENSE ABOVE
+
+"The Software" above means the code: the Astro application, the build-time SEO
+and design contracts, the integrations, the generators, the tests, the
+configuration, and the documentation describing them.
+
+It does NOT include the editorial content and personal likeness in this
+repository. The following are excluded from the grant above and remain
+All Rights Reserved, Copyright (c) 2026 Bryce DeCora:
+
+    src/content/                     the written articles
+    src/assets/bryce-decora.png      photograph of the author
+    src/assets/media/                article imagery, including third-party
+                                     product screenshots that are not the
+                                     author's to sublicense
+    public/og/                       generated share cards bearing the
+                                     author's name and likeness
+
+You may read these, and they necessarily remain present in a clone or fork.
+You may not republish, redistribute, or create derivative works from them.
+Fork the project and replace them with your own -- README.md, "Forking this",
+lists everything that needs changing, and `pnpm og` regenerates the share
+cards from your own values.
+
+This carve-out is not a restriction on using the project. Nothing in it is
+needed to run, modify, deploy, or sell work built on this codebase.
+
+NO TRADEMARK OR PUBLICITY RIGHTS. This license grants rights under copyright
+only. It does not grant permission to use the name "Bryce DeCora", the name
+"CloseBot", or either party's marks, branding, or identity, including in a way
+that suggests endorsement or authorship of your own deployment.

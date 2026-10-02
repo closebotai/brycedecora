@@ -350,11 +350,18 @@ your own values, and `pnpm test`.
 
 ## License
 
-**Not yet licensed.** Without a license file everything here is "all rights
-reserved" by default, which means nobody can legally reuse it — so this needs a
-decision before the repo is made public.
+**[MIT](./LICENSE) for the code** — use it, change it, deploy it, sell work
+built on it. No attribution beyond keeping the licence notice, and no
+obligation to share anything back.
 
-The code and the content want different answers: the Astro setup, the SEO
-contracts and the generators are reusable, while the articles, the headshot and
-the personal brand are not. A split — permissive on code, reserved on
-`src/content/` and `src/assets/` — is the usual shape.
+Four paths are carved out and remain the author's: `src/content/` (the
+articles), `src/assets/bryce-decora.png` (a photograph of a person),
+`src/assets/media/` (article imagery, some of it third-party product
+screenshots that are not mine to sublicense), and `public/og/` (share cards
+carrying my name and face).
+
+**This takes nothing away from using the project.** None of it is needed to
+run, modify, deploy or sell what you build here — a fork replaces all four
+anyway, and [Forking this](#forking-this) lists exactly what to change.
+The carve-out exists so that "use the code freely" does not also mean
+"republish my essays under your byline".
