@@ -3,20 +3,22 @@
  * The open-source explainer.
  *
  * WHY THIS PAGE EXISTS RATHER THAN A BARE LINK. The header's "Fork this site"
- * action used to point straight at GitHub. A repository landing page answers
- * "what is this" badly for someone who has not already decided they want it —
- * it opens on a file tree, and the README's first screen is a premise and a
- * table of rules. This page gives the one-paragraph answer first, and keeps
- * the link to the repository where someone who wants it cannot miss it.
+ * action points here, not at GitHub. A repository landing page answers "what
+ * is this" badly for someone who has not already decided they want it. It
+ * opens on a file tree. This page gives the short answer first and keeps the
+ * repository link where nobody can miss it.
  *
- * Plain language is the constraint here, deliberately. AGENTS.md and DESIGN.md
- * are written for whoever edits the codebase; this is written for someone
- * deciding whether to bother. No jargon survives unless it is defined on
- * first use.
+ * WRITTEN AT ROUGHLY A 3RD-GRADE READING LEVEL, ON PURPOSE, and that is a
+ * tighter constraint than the articles, which sit around 9th grade. Short
+ * sentences, common words, one idea each. If you edit this, read it out loud
+ * first: anything you stumble over is too long.
  *
- * CloseBot is disclosed in the prose, per AGENTS.md — the recommendation below
- * is a founder recommending his own product, and an open-source page is
- * exactly where that would otherwise read as undisclosed promotion.
+ * NO EM DASHES ANYWHERE IN THE COPY. Bryce does not use them. Where a pause is
+ * needed the house move is a full stop, or an ellipsis, which is what the
+ * articles actually do.
+ *
+ * CloseBot is disclosed in the prose, per AGENTS.md. An open-source page is
+ * exactly where an undisclosed recommendation would read as promotion.
  */
 import PageLayout from '../layouts/PageLayout.astro';
 import { person } from '../data/person';
@@ -27,19 +29,18 @@ import { SOURCE_REPO_URL } from '../data/site';
   seo={{
     title: 'Open Source: Fork This Site',
     description:
-      'The code behind this site is public and MIT licensed. An experiment in maintaining an SEO-sound site almost entirely through Claude Code, free to fork.',
+      'The code for this site is free to use. A test of building and running an SEO-friendly site with Claude Code. Fork it and make it your own.',
   }}
   heading="Open source"
-  lede="The code behind this site is public. Take it, change the name, and it is yours."
+  lede="The code for this site is free. Take it. Change the name. It's yours."
   width="wide"
 >
   <div class="lg:grid lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-x-16">
     <div class="mb-10 lg:mb-0">
       {/*
-        The repository link, pulled out of the prose into the position the
-        portrait occupies on /about/. Someone who arrived here from the header
-        button already knows what they want; they should not have to read an
-        essay to find it.
+        The repository link, in the slot the portrait fills on /about/. Someone
+        who clicked "Fork this site" already knows what they want. They should
+        not have to read anything to find it.
       */}
       <a
         href={SOURCE_REPO_URL}
@@ -52,134 +53,131 @@ import { SOURCE_REPO_URL } from '../data/site';
 
       <dl class="mt-8 space-y-4">
         <div>
-          <dt class="kicker">Licence</dt>
-          <dd class="text-small mt-1 text-ink">MIT, for the code</dd>
+          <dt class="kicker">License</dt>
+          <dd class="text-small mt-1 text-ink">MIT. Free to use.</dd>
         </div>
         <div>
           <dt class="kicker">Built with</dt>
-          <dd class="text-small mt-1 text-ink">Astro, Cloudflare Workers</dd>
+          <dd class="text-small mt-1 text-ink">Astro and Cloudflare</dd>
         </div>
         <div>
           <dt class="kicker">Cost to run</dt>
-          <dd class="text-small mt-1 text-ink">A domain, and nothing else</dd>
+          <dd class="text-small mt-1 text-ink">Just a domain</dd>
         </div>
       </dl>
     </div>
 
     <div>
       <div class="prose">
+        {/*
+          {' '} before and after an inline link is deliberate. A newline there
+          collapses to nothing and renders as "throughClaude Code". It is
+          invisible in the source and obvious on the page.
+        */}
         <p>
-          {/*
-            The space before an inline link is written as {' '} on purpose.
-            A newline between text and an <a> collapses to nothing here, which
-            renders as "throughClaude Code" -- invisible in source, obvious on
-            the page, and easy to reintroduce when rewrapping a paragraph.
-          */}
-          This site is an experiment: how far can you get maintaining a
-          genuinely SEO-sound personal site almost entirely through{' '}
-          <a href="https://claude.com/claude-code" rel="noopener">Claude Code</a>, an
-          AI coding agent that works in your terminal? Not generating pages and
-          hoping, but holding a real standard — one that fails the build when it
-          slips.
+          This site is a test. I wanted to see if I could build a real website
+          with AI doing most of the work. Not me typing code all day. An AI
+          agent called{' '}
+          <a href="https://claude.com/claude-code" rel="noopener">Claude Code</a>{' '}
+          does the building. I tell it what I want.
         </p>
 
         <p>
-          The answer so far is: further than I expected, and only because the
-          standard is written down and machine-checked. Everything I learned
-          doing it is in the repository, including the parts that did not work.
+          So far it works better than I thought it would. But there's a catch,
+          and the catch is the whole point.
         </p>
 
-        <h2>Why I made it public</h2>
+        <h2>Why I made it free</h2>
 
         <p>
-          Most advice about SEO is someone describing what they think works.
-          This is the whole thing — the rules, the tests that enforce them, and
-          a site you can look at. You can disagree with it concretely instead of
-          in the abstract.
-        </p>
-
-        <p>
-          It is also a usable starting point. If you want a personal site that
-          is fast, accessible and correctly structured, and you would rather not
-          assemble that yourself, this one already is. Replace my name and my
-          writing and you are done.
-        </p>
-
-        <h2>How it works, in plain terms</h2>
-
-        <p>
-          Every page is built once, ahead of time, into plain HTML files. There
-          is no server deciding anything when someone visits — the file already
-          exists and gets handed over. That is why it is fast, why it costs
-          nothing to host, and why there is very little that can break.
+          Most SEO advice is just people talking. This is the real thing. The
+          rules, the tests, and a live site you can go look at. You can check if
+          it works instead of taking my word for it.
         </p>
 
         <p>
-          The unusual part is that the rules are enforced rather than
-          documented. A page cannot be published without a title, a description,
-          and the structured data search engines read. Not "should not" —
-          cannot. The build refuses it. There are a few hundred automated checks
-          covering broken links, heading order, missing image descriptions,
-          pages nothing links to, and more.
+          You can also just take it. Want a fast personal site that's set up
+          right? This one already is. Swap my name for yours and you're done.
+        </p>
+
+        <h2>How it works, in plain words</h2>
+
+        <p>
+          Every page gets built ahead of time. It turns into a plain file that
+          sits there and waits. When you visit, the file is already done. No
+          server has to think about it.
         </p>
 
         <p>
-          That matters most when an AI agent is doing the work. An agent will
-          cheerfully write a page with a missing description, and nobody would
-          notice for months. Here, it fails immediately and says why. The rules
-          are the thing that makes the automation trustworthy, not the other way
-          round.
+          That's why it loads fast. That's why it costs nothing to host. And
+          that's why almost nothing can break.
         </p>
 
-        <h2>Add a chat widget and analytics, free</h2>
+        <p>
+          Here's the catch I mentioned. The site has rules, and the rules are
+          not suggestions. A page can't go live without a title and a short
+          description. Not "shouldn't." Can't. The site refuses to build. There
+          are a few hundred checks like that. Broken links. Images with no
+          description for screen readers. Pages that nothing links to.
+        </p>
 
         <p>
-          {/*
-            Disclosure first, in the prose. AGENTS.md: the relationship is said
-            in the piece, not inherited from the header.
-          */}
-          One setting is worth knowing about, and I should say plainly that I
-          co-founded the company behind it. Drop a free{' '}
+          That matters a lot when AI writes the code. An AI will happily ship a
+          page with no description, and nobody would notice for months. Here it
+          fails right away and tells you why. The rules are what make the AI
+          safe to trust.
+        </p>
+
+        <h2>Free chat box and visitor stats</h2>
+
+        <p>
+          {/* Disclosure in the prose, per AGENTS.md. Not inherited from the header. */}
+          One more thing, and I should say up front that I co-founded the
+          company behind it. So take it how you want.
+        </p>
+
+        <p>
           <a href={person.worksFor.url} rel="noopener">{person.worksFor.name}</a>{' '}
-          Sales Pixel into one line of configuration and the site gets a chat
-          widget that answers questions, plus visitor numbers — page views and
-          sessions — without adding a separate analytics service.
+          gives out a free Sales Pixel. Drop that one code into the site and you
+          get two things. A chat box that answers questions for you. And basic
+          numbers, like how many people came by.
         </p>
 
         <p>
-          You do not need it. Leave the setting empty and no widget appears;
-          everything else works exactly the same. But it is free, it is one
-          line, and it covers two things most people end up bolting on
-          separately.
+          You don't have to use it. Leave it blank and there's just no chat box.
+          Everything else works the same. But it's free, it's one line, and it
+          covers two jobs most people pay for separately.
         </p>
 
-        <h2>What you get, and what stays mine</h2>
+        <h2>What's yours and what's mine</h2>
 
         <p>
-          The code is MIT licensed: use it, change it, deploy it, build
-          something you sell. No attribution required beyond keeping the licence
-          file, and nothing to send back.
-        </p>
-
-        <p>
-          My writing, my photograph and the share images with my name on them
-          are not included — a fork replaces those anyway, and the repository
-          lists exactly what to swap. The point is that you get the machinery,
-          not my identity.
-        </p>
-
-        <h2>Starting from it</h2>
-
-        <p>
-          Clone it, run two commands, and it is on your machine. The README has
-          a section written specifically for AI coding agents, so if you point
-          one at the project, the first thing it reads is the rulebook rather
-          than guessing at the conventions.
+          The code is MIT licensed. That's a fancy way of saying use it, change
+          it, even sell what you make. Just keep the license file in there.
         </p>
 
         <p>
-          If you build something with it, I would genuinely like to see it:
-          <a href={`mailto:${person.email}`}>{person.email}</a>.
+          My posts, my photo, and the share images with my name on them are not
+          included. You'd swap those out anyway. The project lists exactly what
+          to change. You get the engine, not my face.
+        </p>
+
+        <h2>How to start</h2>
+
+        <p>
+          Copy it down and run two commands. That's it. It's running on your
+          computer.
+        </p>
+
+        <p>
+          The setup guide has a part written just for AI agents. Point Claude
+          Code at this project and the first thing it reads is the rulebook. So
+          it won't have to guess.
+        </p>
+
+        <p>
+          Build something with it? I'd love to see it.{' '}
+          <a href={`mailto:${person.email}`}>{person.email}</a>
         </p>
       </div>
     </div>
