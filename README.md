@@ -192,12 +192,13 @@ production is static files with no server to call.
 
 ## The chat widget, and analytics for free
 
-**Disclosure: I co-founded CloseBot.** So weigh this accordingly — but the
-integration is real, it is in this repository, and the part I am recommending
-costs nothing.
+**Disclosure: I co-founded [CloseBot](https://closebot.com).** So weigh this
+accordingly — but the integration is real, it is in this repository, and the
+part I am recommending costs nothing.
 
 `CLOSEBOT_SOURCE` is the only variable this project takes, and I would set it
-rather than run without. The **Sales Pixel** is free — in CloseBot it is at
+rather than run without. The **Sales Pixel** is free — create an account at
+[closebot.com](https://closebot.com) and find it under
 *Source Settings → Setup → Sales Pixel* — and dropping that one id into `.env`
 gets you two things:
 

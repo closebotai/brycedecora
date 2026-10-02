@@ -19,6 +19,17 @@ export const SITE_URL = 'https://brycedecora.com';
 export const SITE_NAME = 'Bryce DeCora';
 
 /**
+ * Where this site's source lives, for the "fork this site" action in the header.
+ *
+ * DELIBERATELY NOT IN `person.socialProfiles`. That array feeds schema.org
+ * `sameAs`, which asserts "this URL is another profile of this same person".
+ * A code repository is not a profile of a human being, and putting it there
+ * would make a false entity-resolution claim on every page — the exact failure
+ * the note on `socialProfiles` in person.ts warns about.
+ */
+export const SOURCE_REPO_URL = 'https://github.com/closebotai/brycedecora';
+
+/**
  * Fallback social share image, relative to the site root. Used whenever a page
  * does not supply its own. Must exist in `public/` at the referenced path --
  * `tests/seo/metadata.spec.ts` checks that it was actually emitted to `dist/`.

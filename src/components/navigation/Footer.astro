@@ -52,6 +52,23 @@ const year = new Date().getFullYear();
             Email
           </a>
         </li>
+        {/*
+          The open-source explainer, which is where the GitHub link lives. The
+          header carries the same destination as a "Fork this site" action, but
+          only at `lg` and above, because another item wraps the sticky header
+          on a narrow screen. This is the placement that makes that hiding
+          honest rather than a dodge -- the footer is on every page at every
+          width, so nothing is unreachable on a phone.
+        */}
+        <li>
+          <a
+            href="/open-source/"
+            aria-current={isActivePath('/open-source/', current) ? 'page' : undefined}
+            class="no-underline hover:text-accent-hover"
+          >
+            Open source
+          </a>
+        </li>
       </ul>
     </nav>
 
