@@ -52,6 +52,28 @@ const tagline =
   */}
   <BrewColumn loop slot="hero-aside" />
 
+  {/*
+    CLONE THIS SITE. The small-screen counterpart to the header's "Fork this
+    site" action, which is `lg`-only because another item wraps the sticky
+    header below 1024px (see the note in Header.astro).
+
+    Without this, a phone's only route to the repository is the footer, which
+    is a scroll away past the whole catalogue. Hidden at `lg` and above, where
+    the header button takes over -- exactly one of the two is ever on screen,
+    so this is a handoff rather than a second button.
+
+    Points at /open-source/, not GitHub: that page is the single place the
+    repository is linked from, and it is where someone who has not decided yet
+    gets the short version.
+  */}
+  <a
+    href="/open-source/"
+    slot="hero-action"
+    class="kicker panel-shadow mt-8 inline-block border border-line px-4 py-2 text-ink no-underline lg:hidden hover:border-accent hover:text-accent-hover"
+  >
+    Clone this site
+  </a>
+
   <PanelField>
     <section aria-labelledby="writing-heading">
       <h2 id="writing-heading" class="text-title text-field-ink">The catalogue</h2>

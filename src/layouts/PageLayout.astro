@@ -75,6 +75,14 @@ const headerMeasure = full ? 'mx-auto w-full max-w-wide px-gutter pt-12' : '';
             */}
             <h1 class="text-display text-ink">{heading}</h1>
             {lede && <p class="mt-8 max-w-content text-lg text-ink-muted">{lede}</p>}
+
+            {/*
+              An optional call to action directly under the lede. Rendered bare,
+              with no wrapper: the caller owns both the spacing and the
+              breakpoint, so a slot that is only meant for small screens does
+              not leave an empty margin behind at the sizes it hides at.
+            */}
+            <slot name="hero-action" />
           </div>
 
           {/*
@@ -92,6 +100,7 @@ const headerMeasure = full ? 'mx-auto w-full max-w-wide px-gutter pt-12' : '';
           {kicker && <p class="kicker mb-4">{kicker}</p>}
           <h1 class="text-title text-ink">{heading}</h1>
           {lede && <p class="mt-4 text-lg text-ink-muted">{lede}</p>}
+          <slot name="hero-action" />
         </Fragment>
       )
     }
