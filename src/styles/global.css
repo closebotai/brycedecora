@@ -1461,11 +1461,31 @@
     padding: 0.0625em 0.25em;
   }
 
+  /*
+   * SOFT-WRAPS RATHER THAN SCROLLING, and that is a decision about what these
+   * blocks hold. The only ones on the site today are the prompts on
+   * /open-source/ -- English sentences a reader is meant to read and paste,
+   * not code. They are hand-wrapped near 50 characters, which the 606px
+   * reading column fits with room to spare, so `pre-wrap` changes nothing on a
+   * desktop. On a 360px phone the box is 310px and every one of them scrolled
+   * ~160px sideways: half a sentence visible, nine times, on a block whose
+   * whole job is to be copied.
+   *
+   * `pre-wrap` keeps the authored line breaks, which is the part `pre` is
+   * actually here for. It wraps at whitespace ONLY, so a long unbreakable
+   * token -- a URL -- still overflows, and `overflow-x: auto` stays as the
+   * backstop for it. Deliberately no `overflow-wrap: break-word`: breaking a
+   * URL mid-string to save a few pixels makes it look like two URLs.
+   *
+   * If a real code block ever lands here, revisit. A wrapped shell command
+   * reads as two commands, and that is worth a scrollbar.
+   */
   .prose pre {
     border: 1px solid var(--color-line);
     border-radius: 0;
     overflow-x: auto;
     padding: 1rem;
+    white-space: pre-wrap;
   }
 
   .prose hr {

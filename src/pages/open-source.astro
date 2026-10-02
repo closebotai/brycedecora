@@ -19,6 +19,15 @@
  *
  * CloseBot is disclosed in the prose, per AGENTS.md. An open-source page is
  * exactly where an undisclosed recommendation would read as promotion.
+ *
+ * THE PROMPT BLOCKS ARE MEANT TO BE PASTED VERBATIM. They are strings in the
+ * frontmatter rather than text inside <pre>, because Astro preserves
+ * everything inside a <pre> including this file's own indentation -- so markup
+ * indented to match its neighbours would ship four leading spaces on every
+ * line. Hand-wrapped near 60 characters so they do not scroll sideways on a
+ * phone; `.prose pre` has no `pre-wrap` and DESIGN.md does not want new CSS
+ * for this. If you edit one, keep the wrap. Do not reflow them into prose:
+ * the whole point is that a reader copies them without reading them.
  */
 import { Image } from 'astro:assets';
 
@@ -27,13 +36,66 @@ import chatWidget from '../assets/media/screenshot-2026-10-02-at-11-41-52-am.png
 import widgetConversions from '../assets/media/screenshot-2026-10-02-at-11-39-52-am.png';
 import { person } from '../data/person';
 import { SOURCE_REPO_URL } from '../data/site';
+
+/*
+ * The repository URL is interpolated rather than typed, per AGENTS.md: there is
+ * one place this project's address is written and it is SOURCE_REPO_URL.
+ */
+const sayGetIt = `Clone ${SOURCE_REPO_URL}
+into a new folder. Read README.md and AGENTS.md
+before you change anything. Then install it, start
+it up, and tell me what address to open.`;
+
+const sayMakeItMine = `Open the "Forking this" table in README.md and do
+every row for me. My name is ____. My email is
+____. My links are ____. Delete the articles, the
+photo, and the share cards. Those are not mine.
+Then run pnpm bean && pnpm og && pnpm test, and fix
+whatever fails.`;
+
+const sayPushIt = `Make this a new repo on my GitHub and push it.
+Call it ____.`;
+
+const sayCloudflare = `Use my browser. Go to Cloudflare. Make a new Worker
+from my GitHub repo. Use these settings:
+
+  Build command      pnpm test
+  Deploy command     npx wrangler deploy
+  Root directory     /
+  Production branch  main
+  Build variable     PNPM_VERSION = 11.9.0
+
+Give the Worker the same name as "name" in
+wrangler.jsonc. Start the build and tell me when it
+is done.`;
+
+const sayRealAddress = `Put the workers.dev address Cloudflare just gave me
+into SITE_URL in src/data/site.ts. Then push.`;
+
+const sayPixel = `Use my browser again. Log me in to CloseBot. Go to
+Source Settings, then Setup, then Sales Pixel. Copy
+that id. Put it in my .env file as CLOSEBOT_SOURCE.
+Then put it in Cloudflare too, as a build variable,
+under BOTH tabs: Production and Previews Base.`;
+
+const sayCheckPixel = `Now check my live page really has the chat script
+on it. Do not trust the dashboard.`;
+
+const saySafety = `Still in my browser, in Cloudflare under SSL/TLS:
+turn on Always Use HTTPS, set Minimum TLS Version
+to 1.2, and turn on HSTS and the No-Sniff header.
+Then check from the command line that the header is
+really being sent.`;
+
+const sayDomain = `Add my domain to Cloudflare and point it at this
+Worker. Then put it in SITE_URL and push.`;
 ---
 
 <PageLayout
   seo={{
     title: 'Open Source: Fork This Site',
     description:
-      'The code for this site is free to use. A test of building and running an SEO-friendly site with Claude Code. Fork it and make it your own.',
+      'The code for this site is free. Fork it, and Claude Code puts it live on Cloudflare in about 30 minutes. The exact steps, and what to say.',
   }}
   heading="Open source"
   lede="The code for this site is free. Take it. Change the name. It's yours."
@@ -73,7 +135,16 @@ import { SOURCE_REPO_URL } from '../data/site';
         </div>
         <div>
           <dt class="kicker">Cost to run</dt>
-          <dd class="text-small mt-1 text-ink">Just a domain</dd>
+          {/*
+            Was "Just a domain". The steps below now reach a live site on a
+            free workers.dev address with no domain at all, so that read as a
+            cost the reader does not have to pay to get started.
+          */}
+          <dd class="text-small mt-1 text-ink">Free. A domain is extra.</dd>
+        </div>
+        <div>
+          <dt class="kicker">Time to live</dt>
+          <dd class="text-small mt-1 text-ink">About 30 minutes</dd>
         </div>
       </dl>
   </Fragment>
@@ -218,17 +289,190 @@ import { SOURCE_REPO_URL } from '../data/site';
           to change. You get the engine, not my face.
         </p>
 
-        <h2>How to start</h2>
+        <h2>How long this takes</h2>
 
         <p>
-          Copy it down and run two commands. That's it. It's running on your
-          computer.
+          About 30 minutes, and then it's live on the internet. Not a weekend.
+        </p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Step</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>On your computer</td>
+              <td>5 minutes</td>
+            </tr>
+            <tr>
+              <td>Your name on it</td>
+              <td>10 minutes</td>
+            </tr>
+            <tr>
+              <td>Live on the internet</td>
+              <td>10 minutes</td>
+            </tr>
+            <tr>
+              <td>Chat box and stats</td>
+              <td>5 minutes</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p>
+          Make two free accounts first, or the clock starts late. One at GitHub.
+          One at Cloudflare. Both free, both quick.
         </p>
 
         <p>
-          The setup guide has a part written just for AI agents. Point Claude
-          Code at this project and the first thing it reads is the rulebook. So
-          it won't have to guess.
+          You don't need a domain yet. Cloudflare hands you a free web address
+          that ends in workers.dev. Your site goes there first. Point your own
+          name at it later, once you have one.
+        </p>
+
+        <p>
+          Here's the honest part. Setup is half an hour. The writing is not. The
+          posts are the slow bit, and they stay the slow bit. No tool fixes
+          that.
+        </p>
+
+        <h2>What to tell Claude Code</h2>
+
+        <p>
+          Six things to say. Copy one, paste it, read what comes back. Fill in
+          the blanks with your own stuff.
+        </p>
+
+        <h3>1. Get it on your computer</h3>
+
+        <p>
+          You need Node 22 on your machine. Ask for it in the same breath if you
+          don't have it.
+        </p>
+
+        <pre><code>{sayGetIt}</code></pre>
+
+        <p>
+          Look at what it reads first. The rulebook. That's the part that
+          matters. It learns the rules before it writes a line, so it doesn't
+          have to guess. Open the address it hands back and the site is there.
+        </p>
+
+        <h3>2. Put your name on it</h3>
+
+        <p>
+          The project keeps a list of every spot my name is hiding in. It's{' '}
+          <a href={`${SOURCE_REPO_URL}#forking-this`} rel="noopener">
+            a table in the setup guide</a>. Point Claude Code at it and let it
+          work down the rows.
+        </p>
+
+        <pre><code>{sayMakeItMine}</code></pre>
+
+        <p>
+          My posts, my photo, and my share cards are not yours to keep, and this
+          is the step that pulls them out. Don't skip it. Ship it with my name
+          still in it and you've published a copy of me.
+        </p>
+
+        <h3>3. Put it on GitHub</h3>
+
+        <p>
+          Cloudflare builds straight from GitHub, so it has to live there first.
+        </p>
+
+        <pre><code>{sayPushIt}</code></pre>
+
+        <p>
+          It'll stop and ask you to log in to GitHub once. You do that bit. It
+          can't type your password, and it shouldn't.
+        </p>
+
+        <h3>4. Put it on Cloudflare</h3>
+
+        <p>
+          This is the one people expect to be hard. Claude Code can drive your
+          browser. You log in to Cloudflare, then hand it the wheel and it
+          clicks through the setup for you.
+        </p>
+
+        <pre><code>{sayCloudflare}</code></pre>
+
+        <p>
+          Two things bite people here, so say them out loud. The Worker's name
+          has to match the name in the project, or the build just fails. And
+          that PNPM_VERSION line is not optional. Leave it out and the build
+          dies with an error that never tells you why.
+        </p>
+
+        <p>
+          Look at the build command, though. It's the test command. So the site
+          can't go live broken. That's the catch from earlier, doing its job.
+        </p>
+
+        <p>When the build finishes you get a free address. Hand it back:</p>
+
+        <pre><code>{sayRealAddress}</code></pre>
+
+        <h3>5. Get the free chat box and stats</h3>
+
+        <p>Same trick. Your browser, your login, its hands.</p>
+
+        <pre><code>{sayPixel}</code></pre>
+
+        <p>
+          Both tabs. I mean it. They're two separate lists, and filling in one
+          leaves your test pages with no chat box and nothing to tell you why.
+          Nothing breaks. It's just quietly not there.
+        </p>
+
+        <p>So check the real page, not the dashboard.</p>
+
+        <pre><code>{sayCheckPixel}</code></pre>
+
+        <h3>6. Turn on the safety settings</h3>
+
+        <p>
+          Four switches live in Cloudflare and nowhere else. They can't sit in
+          the code, because there's no server here to run them.
+        </p>
+
+        <pre><code>{saySafety}</code></pre>
+
+        <p>
+          The HSTS one has a trap in it. The box opens scrolled past its own on
+          switch, so you can save it, watch it save, and have it do nothing at
+          all. That's why the last line says check from the command line.
+        </p>
+
+        <h2>What it can't do for you</h2>
+
+        <p>Three things, so none of them surprise you halfway through.</p>
+
+        <p>
+          It can't buy your domain. That needs your card. Buy one whenever you
+          want it, then say this:
+        </p>
+
+        <pre><code>{sayDomain}</code></pre>
+
+        <p>
+          Call that ten more minutes, plus some waiting around for the rest of
+          the internet to catch up.
+        </p>
+
+        <p>
+          It can't type your passwords. You log in, every time, and then it
+          takes over. Driving your browser needs the Claude extension for
+          Chrome, and you hand it permission one site at a time.
+        </p>
+
+        <p>
+          And it can't know what you want to say. It'll ask. That's the half of
+          this no tool is going to do for you.
         </p>
 
         <p>
