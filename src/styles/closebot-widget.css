@@ -1,0 +1,291 @@
+/**
+ * CloseBot chat widget -- restyled to the design constitution.
+ *
+ * The widget ships the exact aesthetic DESIGN.md exists to avoid: a
+ * `rgb(59, 130, 246)` header (Tailwind blue-500), 12px corner radius, and a
+ * soft blurred drop shadow. Left alone it is the single most AI-looking thing
+ * on the site, sitting permanently in the corner of every page.
+ *
+ * It renders into the LIGHT DOM -- no iframe, no shadow root -- so ordinary CSS
+ * reaches it.
+ *
+ * ON THE `!important`s. They are not laziness and they are not negotiable here.
+ * The widget fights back on two fronts: it injects its own stylesheet at
+ * runtime that already uses `!important`, and it sets `background` inline on
+ * `.cb-btn`. A normal author declaration loses to both. An author `!important`
+ * beats an inline declaration, which is the only lever left. This is also
+ * precisely the situation the rule against `!important` carves out -- overriding
+ * third-party CSS you do not control -- so it stays quarantined in this file
+ * and must not spread into our own stylesheets.
+ *
+ * Everything references our semantic tokens, so light and dark are handled by
+ * the same token swap as the rest of the site. There is no widget-specific
+ * dark mode to maintain.
+ *
+ * THIS IS SELECTOR-COUPLED TO SOMEONE ELSE'S MARKUP. If the widget renames a
+ * class, that piece silently reverts to blue-and-rounded. The right long-term
+ * fix is real theming support in cb.js -- this file is the interim, and the same
+ * caveat applies as to the `.cb-send` label patch in BaseLayout.astro.
+ */
+
+/* ---- The widget's own theming hook ------------------------------------- */
+
+/*
+ * The widget carries an inline `--cb-color: #3b82f6` on `.cb-panel` and drives
+ * its accents from it. Re-pointing that one variable is worth more than any
+ * rule below, because it also recolours internals this file never enumerates --
+ * including any the widget adds later. The `!important` is required to beat the
+ * inline custom property.
+ *
+ * It is set on both roots because the inline value lives on `.cb-panel` and
+ * would otherwise win for everything inside it.
+ */
+body .cb-panel,
+body .cb-btn {
+  --cb-color: var(--color-accent) !important;
+  --cb-primary: var(--color-accent) !important;
+}
+
+/* ---- The launcher ------------------------------------------------------ */
+
+body .cb-btn {
+  border: 1px solid var(--color-line) !important;
+  border-radius: 0 !important;
+  background: var(--color-chrome) !important;
+  color: var(--color-chrome-ink) !important;
+  box-shadow: 3px 3px 0 var(--color-ink) !important;
+  font-family: var(--font-mono) !important;
+}
+
+body .cb-btn:hover {
+  background: var(--color-accent) !important;
+  color: var(--color-surface) !important;
+}
+
+/*
+ * A square status pip. Circles belong to the aesthetic being replaced.
+ *
+ * Both pips sit on chrome, so they take the chrome's contrasting ink rather
+ * than the accent. Tobacco on the dark launcher was nearly invisible, and it
+ * would have inverted into an equally invisible pale-on-pale in dark mode.
+ */
+body .cb-online-dot,
+body .cb-header-online-dot {
+  border-radius: 0 !important;
+  background: var(--color-chrome-ink) !important;
+}
+
+/*
+ * THE ICONS ARE HARD-CODED WHITE AND MUST NOT BE.
+ *
+ * The launcher's glyph carries an inline `style="fill: rgb(255,255,255)"` and
+ * the send arrow uses a `stroke="#fff"` presentation attribute. White reads
+ * fine on the widget's original blue, but our chrome INVERTS between themes:
+ * in dark mode chrome is cream, and a white icon on cream is invisible.
+ *
+ * Routing both through `currentColor` makes the glyphs follow whatever text
+ * colour the button already has, so they contrast correctly in both themes for
+ * free. `!important` is needed for the fill because an inline style outranks a
+ * normal author rule; the stroke only needs it for consistency, since a
+ * presentation attribute loses to any rule at all.
+ */
+body .cb-btn svg,
+body .cb-btn svg * {
+  fill: currentColor !important;
+}
+
+body .cb-send svg *,
+body .cb-header-close svg * {
+  stroke: currentColor !important;
+  fill: none !important;
+}
+
+/* ---- The panel --------------------------------------------------------- */
+
+body .cb-panel {
+  border: 1px solid var(--color-line) !important;
+  border-radius: 0 !important;
+  background: var(--color-surface-raised) !important;
+  color: var(--color-ink) !important;
+  box-shadow: 4px 4px 0 var(--color-ink) !important;
+  font-family: var(--font-sans) !important;
+}
+
+/*
+ * The header becomes a panel title bar, identical to the `.panel-title` rule in
+ * global.css. This is the single change that does most of the work: it is what
+ * makes the widget read as another window in the same stack rather than as a
+ * bolted-on product.
+ */
+body .cb-header {
+  background: var(--color-chrome) !important;
+  color: var(--color-chrome-ink) !important;
+  border-radius: 0 !important;
+  border-bottom: 1px solid var(--color-line) !important;
+  padding: 0.375rem 0.5rem !important;
+}
+
+body .cb-header-title,
+body .cb-header-chatter,
+body .cb-header-chatter-name,
+body .cb-powered-by {
+  font-family: var(--font-mono) !important;
+  font-size: var(--text-micro) !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  color: var(--color-chrome-ink) !important;
+}
+
+/*
+ * "Powered by CloseBot" in the header.
+ *
+ * WHETHER IT SHOWS AT ALL IS A CLOSEBOT ACCOUNT SETTING, not a CSS one. When
+ * the branding toggle is off, cb.js sets `display: none` as an inline style on
+ * this element and no stylesheet here is involved. If the attribution ever
+ * vanishes, change it in CloseBot rather than forcing it back with a rule --
+ * overriding it here would mean the site ignoring a product setting that was
+ * turned off on purpose.
+ *
+ * OPACITY IS 0.9, AND IT MUST NOT GO BACK DOWN. It was 0.65, which looks like
+ * a harmless way to make the credit subordinate to the chat title, and in the
+ * light theme it is -- 9.6:1. In the DARK theme it is not: the title bar
+ * inverts to a light chrome and this text becomes dark, and dark text fading
+ * into a light background washes out far faster than the reverse. At 0.65 it
+ * renders at 2.53:1, well under the 4.5:1 AA floor, and the fact that the
+ * light theme looked fine is exactly why nobody noticed.
+ *
+ * Measured, per theme, with the site's own tokens:
+ *
+ *            0.65     0.8      0.85     0.9      1.0
+ *   light    9.62     11.61    12.28    12.94    14.27
+ *   dark     2.53     3.92     4.80     6.18     14.58
+ *
+ * 0.9 clears AA in both with room; 0.85 only just scrapes it in dark. The
+ * credit is still subordinate -- it is micro-size and the only lowercase thing
+ * in a bar of uppercase labels, which is where the hierarchy actually comes
+ * from. Lighthouse will not catch a regression here, because it never opens
+ * the widget.
+ */
+body .cb-powered-by {
+  opacity: 0.9 !important;
+  text-transform: none !important;
+}
+
+body .cb-header-close {
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--color-chrome-ink) !important;
+  font-family: var(--font-mono) !important;
+  /* Sized to the title bar it sits in, not to a touch target twice its height. */
+  font-size: var(--text-kicker) !important;
+  line-height: 1 !important;
+  padding: 0.25rem 0.375rem !important;
+}
+
+body .cb-header-close:hover {
+  background: var(--color-accent) !important;
+  color: var(--color-surface) !important;
+}
+
+/* ---- Messages ---------------------------------------------------------- */
+
+body .cb-messages {
+  background: var(--color-surface) !important;
+}
+
+body .cb-msg {
+  border: 1px solid var(--color-line) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  font-family: var(--font-sans) !important;
+  font-size: var(--text-small) !important;
+  line-height: 1.5 !important;
+}
+
+body .cb-msg.bot {
+  background: var(--color-surface-raised) !important;
+  color: var(--color-ink) !important;
+}
+
+/*
+ * The visitor's own messages invert, the way a selected row does. Reusing the
+ * title-bar pair keeps the widget to the same two-tone palette as a panel.
+ */
+body .cb-msg.user {
+  background: var(--color-chrome) !important;
+  color: var(--color-chrome-ink) !important;
+}
+
+/* ---- Footer, input, send ----------------------------------------------- */
+
+body .cb-footer {
+  background: var(--color-surface-raised) !important;
+  border-top: 1px solid var(--color-line) !important;
+}
+
+body .cb-input {
+  border: 1px solid var(--color-line) !important;
+  border-radius: 0 !important;
+  background: var(--color-surface) !important;
+  color: var(--color-ink) !important;
+  font-family: var(--font-sans) !important;
+  font-size: var(--text-small) !important;
+}
+
+body .cb-input::placeholder {
+  color: var(--color-ink-muted) !important;
+}
+
+/*
+ * Scoped through `.cb-footer` on purpose. The widget's own rule for the send
+ * button is `.cb-footer .cb-send { background: var(--cb-color) !important }`,
+ * which outranks a single-class selector even when both are !important -- which
+ * is why this button stayed tobacco while everything else took our chrome.
+ *
+ * Chrome rather than accent is also the legibility fix: a thin white arrow on
+ * mid-tobacco was muddy. On chrome it is the same crisp pairing as the title
+ * bars and the launcher.
+ */
+body .cb-footer .cb-send,
+body .cb-status-actions .cb-status-btn,
+body .cb-send,
+body .cb-status-btn {
+  border: 1px solid var(--color-line) !important;
+  border-radius: 0 !important;
+  background: var(--color-chrome) !important;
+  color: var(--color-chrome-ink) !important;
+  box-shadow: none !important;
+  font-family: var(--font-mono) !important;
+  font-size: var(--text-kicker) !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+}
+
+body .cb-footer .cb-send:hover,
+body .cb-status-actions .cb-status-btn:hover,
+body .cb-send:hover,
+body .cb-status-btn:hover {
+  background: var(--color-accent) !important;
+  color: var(--color-surface) !important;
+}
+
+body .cb-form-notice {
+  font-family: var(--font-mono) !important;
+  font-size: var(--text-micro) !important;
+  letter-spacing: 0.06em !important;
+  color: var(--color-ink-muted) !important;
+}
+
+/*
+ * The focus ring is a floor, not a suggestion -- including inside a widget we
+ * did not write. The 2px radius is the one permitted radius in the system.
+ */
+body .cb-input:focus-visible,
+body .cb-send:focus-visible,
+body .cb-btn:focus-visible,
+body .cb-header-close:focus-visible,
+body .cb-status-btn:focus-visible {
+  outline: 2px solid var(--color-accent) !important;
+  outline-offset: 2px !important;
+  border-radius: 2px !important;
+}

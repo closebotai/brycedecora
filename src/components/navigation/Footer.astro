@@ -1,0 +1,93 @@
+---
+/**
+ * Site footer.
+ *
+ * Renders the person's name and contact from the canonical entity in
+ * src/data/person.ts -- never retyped here. The same object feeds the Person
+ * JSON-LD, so the visible contact details and the structured data cannot
+ * disagree.
+ *
+ * The copyright year is computed at BUILD time, which is correct for a static
+ * site: the value is baked into the HTML and costs no client JavaScript. It
+ * updates on the next deploy.
+ */
+import { footerNav } from '../../data/navigation';
+import { person } from '../../data/person';
+import { isActivePath } from '../../utils/urls';
+
+const current = Astro.url.pathname;
+const year = new Date().getFullYear();
+---
+
+{/*
+  Dense, mono, multi-column -- a colophon rather than a sign-off. The version
+  string is ornament and is allowed to be. See DESIGN.md.
+*/}
+<footer class="mt-24 border-t border-line">
+  <div
+    class="mx-auto flex max-w-wide flex-wrap items-baseline justify-between gap-x-8 gap-y-4 px-gutter py-8"
+  >
+    <p class="kicker">
+      &copy; {year} {person.name}
+      <span aria-hidden="true"> &middot; BRYCEDECORA.COM v0.1</span>
+    </p>
+
+    <nav aria-label="Footer">
+      <ul class="kicker flex flex-wrap items-center gap-x-6 gap-y-2">
+        {
+          footerNav.map((item) => (
+            <li>
+              <a
+                href={item.href}
+                aria-current={isActivePath(item.href, current) ? 'page' : undefined}
+                class="no-underline hover:text-accent-hover"
+              >
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+        <li>
+          <a href={`mailto:${person.email}`} class="no-underline hover:text-accent-hover">
+            Email
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    {
+      /*
+        Social profiles, from the same array that produces schema.org `sameAs`.
+        Renders nothing while the array is empty — correct, since an empty
+        social row looks broken and a guessed URL is worse than none.
+
+        rel="me" is the microformats identity convention: it asserts that the
+        linked profile is the same person as this site's owner. Several
+        platforms (Mastodon among them) read it to verify ownership, and it
+        reinforces the same claim `sameAs` makes in the JSON-LD.
+
+        NOT A <nav>, DELIBERATELY. The header renders the same three links in a
+        <nav aria-label="Social profiles">, and wrapping these in one too put
+        two landmarks with an IDENTICAL label on every page -- which is worse
+        than no label, because the whole point of labelling a landmark is to
+        tell it apart from the others in the list.
+
+        A plain list is the right answer rather than inventing a second name
+        for the same thing: these links already sit inside the footer landmark
+        and the "Footer" nav above, so nothing becomes unreachable. See
+        AGENTS.md -- "Do not sprinkle landmarks for their own sake."
+      */
+      person.socialProfiles.length > 0 && (
+        <ul class="kicker flex flex-wrap items-center gap-x-6 gap-y-2">
+          {person.socialProfiles.map((profile) => (
+            <li>
+              <a href={profile.url} rel="me noopener" class="no-underline hover:text-accent-hover">
+                {profile.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  </div>
+</footer>

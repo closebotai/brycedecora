@@ -1,0 +1,14 @@
+# Permanent redirects, applied by Cloudflare Workers Assets.
+#
+# Consumed by Cloudflare rather than served, same as _headers.
+#
+# THIS IS WHERE A RENAMED SLUG GOES. The URL policy in AGENTS.md says never to
+# create two indexable routes for the same content and never to link to a
+# redirect -- so when an article's slug changes, the old address has to keep
+# resolving for anyone who already linked to it, with a 301 rather than a new
+# page. Internal links are updated to the new slug in the same change, so
+# nothing on this site should ever hit a line in this file.
+#
+# Format: <from> <to> <status>
+
+/writing/the-hard-part-of-conversation-design-is-restraint/  /writing/top-3-ai-softwares-i-use-daily/  301

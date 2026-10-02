@@ -1,0 +1,182 @@
+---
+/**
+ * About.
+ *
+ * ProfilePage, because that is what it is: the page that identifies the Person
+ * the rest of the site's structured data references. It is also the page most
+ * likely to be quoted when something summarises who Bryce is, so the first
+ * paragraph answers that question outright rather than building to it.
+ *
+ * EVERY CLAIM HERE IS CORROBORATED. Facts that appeared in only one place, or
+ * that sources disagreed on, were left out rather than hedged. AGENTS.md
+ * forbids fabricating detail about a real person, and a bio is exactly where
+ * that temptation is strongest.
+ *
+ * Specifically still absent, and deliberately: the size and timing of the
+ * first raise, and which Washington town the company is based in. Both are
+ * widely repeated online and the sources disagree, so neither is on the page.
+ * They are not missing because nobody thought of them — if either is ever
+ * added it should come from Bryce, not from a search result.
+ *
+ * This used to be stated in a COLOPHON panel on the page itself. It was
+ * removed at his request; the reasoning stays here, where it is aimed at
+ * whoever edits this file next rather than at a reader.
+ */
+import { Image } from 'astro:assets';
+
+import PageLayout from '../layouts/PageLayout.astro';
+import portrait from '../assets/bryce-decora.png';
+import { person } from '../data/person';
+---
+
+<PageLayout
+  seo={{
+    title: 'About Bryce DeCora',
+    description:
+      'Co-founder and CEO of CloseBot. Former Boeing engineer who left to teach himself to code, and now builds AI that handles sales conversations.',
+    openGraph: { type: 'profile' },
+  }}
+  pageType="ProfilePage"
+  heading="About"
+  lede="Co-founder and CEO of CloseBot. Former Boeing engineer, self-taught developer, and now someone whose software talks to a lot of strangers."
+  width="wide"
+>
+  <div class="lg:grid lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-x-16">
+    <div class="mb-10 lg:mb-0">
+      {/*
+        Framed as a print. The source photograph has a white studio
+        background, which would read as a rendering mistake sitting on cream —
+        the hairline and hard offset shadow make that white deliberate, so it
+        looks like a photograph on the page rather than a transparency that
+        failed. Displayed at 176px against a 332px source, so it stays sharp
+        on a 2x display.
+      */}
+      <Image
+        src={portrait}
+        alt="Bryce DeCora"
+        width={176}
+        height={176}
+        loading="eager"
+        fetchpriority="high"
+        class="border border-line shadow-[3px_3px_0_var(--color-ink)]"
+      />
+
+      <dl class="mt-8 space-y-4">
+        <div>
+          <dt class="kicker">Role</dt>
+          <dd class="text-small mt-1 text-ink">{person.jobTitle}</dd>
+        </div>
+        <div>
+          <dt class="kicker">Company</dt>
+          <dd class="text-small mt-1">
+            <a
+              href={person.worksFor.url}
+              rel="noopener"
+              class="text-accent underline underline-offset-4 hover:text-accent-hover"
+            >
+              {person.worksFor.name}
+            </a>
+          </dd>
+        </div>
+        <div>
+          <dt class="kicker">Email</dt>
+          <dd class="text-small mt-1">
+            <a
+              href={`mailto:${person.email}`}
+              class="text-accent underline underline-offset-4 hover:text-accent-hover"
+            >
+              {person.email}
+            </a>
+          </dd>
+        </div>
+      </dl>
+    </div>
+
+    <div>
+      <div class="prose">
+        <p>
+          I co-founded <a href={person.worksFor.url} rel="noopener">CloseBot</a>, an
+          AI platform that qualifies leads and books appointments by having an
+          actual conversation with them. It runs across the channels businesses
+          already use, and it works at three in the morning, which is the part
+          that turns out to matter most.
+        </p>
+
+        <h2>How I got here</h2>
+
+        <p>
+          I trained as a mechanical engineer at the South Dakota School of Mines
+          and Technology, then spent several years at Boeing as an equipment and
+          tool engineer, a production tooling stress engineer, and an automation
+          control engineer. It was good work. It was also work where the thing I
+          built and the thing a customer felt were separated by several years and
+          a lot of other people.
+        </p>
+
+        <p>
+          {/*
+            Cobras.io and Finite Languages are named but NOT linked: cobras.io
+            no longer resolves. A dead link on a bio page is worse than no link,
+            and it is the kind of thing nobody notices for a year.
+          */}
+          So I left, and taught myself to write software. Before that I had built
+          Cobras.io and Finite Languages — the first to manage client
+          communications, the second a platform for multilingual bloggers. Both
+          taught me more about what people will actually put up with in a
+          product than any amount of planning would have.
+        </p>
+
+        <h2>Why CloseBot exists</h2>
+
+        <p>
+          The problem is response latency. A lead that gets a real reply in
+          minutes converts at a dramatically higher rate than one that gets a
+          reply the next morning, and no human team covers every hour. I had
+          built a rough version of an AI qualifier for my own business before
+          ChatGPT launched. When it launched, it was obvious what the rough
+          version could become, and I went all in.
+        </p>
+
+        <p>
+          CloseBot has since booked over a million appointments and handles six
+          figures' worth of messages a day. The number I actually care about is
+          different: how often the person on the other end could not tell, and
+          did not need to.
+        </p>
+
+        <h2>What I write about here</h2>
+
+        <p>
+          Mostly what I have learned operating an AI setter at scale: what the
+          published benchmarks get wrong, where these systems genuinely fail,
+          and the decisions behind how we build them. Some of it is
+          uncomfortable for a vendor to publish, which is roughly how I pick
+          what to write about.
+        </p>
+
+        <h2>Getting in touch</h2>
+
+        {/*
+          The profile list is built from `person.socialProfiles` — the same
+          array that produces the header, the footer, and schema.org `sameAs`.
+          It was a hard-coded LinkedIn URL, which is exactly the duplication
+          AGENTS.md means by "no duplicated business data": adding Instagram
+          and Facebook to the entity would have left this sentence quietly
+          claiming LinkedIn was the only one.
+        */}
+        <p>
+          Email is best: <a href={`mailto:${person.email}`}>{person.email}</a>.
+          I am also on {
+            person.socialProfiles.map((profile, i) => (
+              <Fragment>
+                {i > 0 && (i === person.socialProfiles.length - 1 ? ' and ' : ', ')}
+                <a href={profile.url} rel="me noopener">{profile.label}</a>
+              </Fragment>
+            ))
+          }.
+        </p>
+      </div>
+
+    </div>
+  </div>
+</PageLayout>

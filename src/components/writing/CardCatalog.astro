@@ -1,0 +1,188 @@
+---
+/**
+ * Writing as a card catalog.
+ *
+ * Articles rendered as index cards in a loose pile, with drawer labels along
+ * the top that sift the pile down to one topic. Choosing a topic squares the
+ * stack — see the motion note in global.css for why that snaps rather than
+ * eases.
+ *
+ * ZERO JAVASCRIPT. The filter is a radio group plus `:has()`. This is not a
+ * flourish: AGENTS.md permits a hydration directive only when the interaction
+ * cannot reasonably be built from native HTML and CSS, and a filter is the
+ * textbook case of one that can.
+ *
+ * Three consequences worth stating, because they are the reasons to prefer it
+ * rather than incidental benefits:
+ *
+ *  - It works on first paint. Nothing to load, nothing to hydrate, no flash of
+ *    unfiltered content.
+ *  - Every article link is in the HTML regardless of filter state, so crawlers
+ *    and anything parsing the page see the whole set. The default state shows
+ *    everything, so nothing is hidden at render time either.
+ *  - It degrades to a plain list of every article when CSS fails, which is the
+ *    correct failure mode.
+ */
+import Panel from '../ui/Panel.astro';
+import { articlePath, type Article } from '../../utils/collections';
+
+interface Props {
+  articles: readonly Article[];
+  /**
+   * Heading level for each card title. THE CALLER'S DECISION, like Panel's.
+   *
+   * The correct level depends on what sits above the catalog, which this
+   * component cannot see. On the homepage it lives under a section <h2>, so
+   * cards are <h3>. On /writing/ it sits directly under the page <h1>, so
+   * cards are <h2> — hard-coding 3 there would skip a level, and
+   * tests/seo/headings.spec.ts fails the build when it does.
+   */
+  headingLevel?: 2 | 3;
+  class?: string;
+}
+
+const { articles, headingLevel = 3, class: className = '' } = Astro.props;
+
+const CardHeading = `h${headingLevel}` as const;
+
+/** Matches the radio `value` and the CSS in global.css. */
+const ALL = 'everything';
+
+const slug = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+/**
+ * Topics, with counts, derived from the articles themselves. Never a typed
+ * list: a hand-maintained one goes stale the first time a tag is renamed, and
+ * a drawer label for an empty drawer is worse than no label.
+ */
+const topics = [...new Set(articles.flatMap((article) => article.data.tags))]
+  .map((tag) => ({
+    label: tag,
+    slug: slug(tag),
+    count: articles.filter((article) => article.data.tags.includes(tag)).length,
+  }))
+  .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+
+/*
+ * One `display: none` rule per topic, generated because CSS cannot compare a
+ * checked input's value to an element's attribute. Emitted with `is:inline` so
+ * Astro does not scope-hash the selectors out from under the generated text.
+ * Every class is `.catalog`-prefixed, so a global block cannot collide.
+ */
+const filterCss = topics
+  .map(
+    (topic) =>
+      `.catalog:has(.catalog-radio[value="${topic.slug}"]:checked) ` +
+      `.catalog-card:not([data-topics~="${topic.slug}"]){display:none}`,
+  )
+  .join('');
+
+const dateFormat = new Intl.DateTimeFormat('en-US', {
+  year: 'numeric',
+  month: 'short',
+  timeZone: 'UTC',
+});
+
+/** Catalog numbers are 1-indexed and zero-padded, like a real card. */
+const cardNumber = (index: number) => `№ ${String(index + 1).padStart(3, '0')}`;
+---
+
+<div class:list={['catalog', className]}>
+  {filterCss && <style is:inline set:html={filterCss} />}
+
+  {
+    /*
+     * A real radio group. `<fieldset>`/`<legend>` give it a name and group
+     * semantics, so a screen reader announces "Sift by topic, radio group"
+     * rather than a row of unexplained links.
+     *
+     * Only rendered when there is more than one topic to choose between — a
+     * filter offering a single option is furniture, not a control.
+     */
+    topics.length > 1 && (
+      <fieldset class="catalog-controls">
+        <legend class="kicker mb-3 w-full">Sift by topic</legend>
+
+        <input
+          class="catalog-radio sr-only"
+          type="radio"
+          name="catalog-topic"
+          id="catalog-topic-everything"
+          value={ALL}
+          checked
+        />
+        <label class="catalog-tab" for="catalog-topic-everything">
+          Everything
+          <span class="catalog-count">{articles.length}</span>
+        </label>
+
+        {topics.map((topic) => (
+          <>
+            <input
+              class="catalog-radio sr-only"
+              type="radio"
+              name="catalog-topic"
+              id={`catalog-topic-${topic.slug}`}
+              value={topic.slug}
+            />
+            <label class="catalog-tab" for={`catalog-topic-${topic.slug}`}>
+              {topic.label}
+              <span class="catalog-count">{topic.count}</span>
+            </label>
+          </>
+        ))}
+      </fieldset>
+    )
+  }
+
+  <ul class="catalog-stack">
+    {
+      articles.map((article, index) => (
+        <li class="catalog-card" data-topics={article.data.tags.map(slug).join(' ')}>
+          {/*
+            The panel is ORNAMENTAL here — no `headingLevel`, so it renders a
+            <div> and the catalog number stays out of the document outline.
+            The article's own <h3> below is the real heading. A panel titled
+            "№ 001" appearing in the outline would be exactly the landmark
+            noise AGENTS.md warns about.
+          */}
+          <Panel
+            title={cardNumber(index)}
+            meta={dateFormat.format(article.data.pubDate)}
+            shadow
+          >
+            <CardHeading class="text-small font-semibold">
+              {/*
+                `catalog-link` stretches this anchor's hit area over the whole
+                card — see global.css. The link stays here, inside the heading,
+                so the outline and the accessible name are unchanged; only the
+                clickable region grows.
+              */}
+              <a
+                href={articlePath(article.id)}
+                class="catalog-link text-ink no-underline hover:text-accent-hover"
+              >
+                {article.data.title}
+              </a>
+            </CardHeading>
+
+            <p class="text-small mt-2 text-ink-muted">{article.data.description}</p>
+
+            {article.data.tags.length > 0 && (
+              <p class="kicker mt-4">
+                {/*
+                  Ruled off like the subject line on a catalog card. Plain text,
+                  not links: these topics are the filter's vocabulary, and
+                  turning them into links would invent a second navigation
+                  system for the same job.
+                */}
+                <span class="sr-only">Topics: </span>
+                {article.data.tags.join(' · ')}
+              </p>
+            )}
+          </Panel>
+        </li>
+      ))
+    }
+  </ul>
+</div>

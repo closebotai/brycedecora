@@ -1,0 +1,120 @@
+---
+/**
+ * A note pinned above the chat launcher, telling people what it is for.
+ *
+ * The launcher on its own is an anonymous square in the corner. This says that
+ * the thing behind it answers questions and takes newsletter signups, which is
+ * the only reason anyone would open it.
+ *
+ * WHY THIS ONE NEEDS JAVASCRIPT, when almost nothing else here does.
+ *
+ * It has to know whether someone else's widget is open. That state lives in
+ * cb.js, is expressed as inline styles on `.cb-panel`, and is not exposed as
+ * anything CSS can select on reliably. `:has()` against a third-party inline
+ * style would be a guess that breaks silently the first time they change it.
+ *
+ * It also SHOULD NOT EXIST WITHOUT JAVASCRIPT. The widget it points at is
+ * itself script-driven, so with JS off there is no launcher and a note pointing
+ * at an empty corner would be worse than nothing. Hence `hidden` in the markup
+ * and revealed only once `.cb-btn` is actually in the DOM — the no-JS state is
+ * correct by construction rather than by a fallback.
+ *
+ * COUPLED TO SOMEONE ELSE'S MARKUP, like closebot-widget.css. If the widget
+ * renames `.cb-btn` or `.cb-panel`, this stops appearing. It fails closed,
+ * which is the right direction for an ornament.
+ */
+---
+
+<div id="widget-callout" class="widget-callout" hidden>
+  <div class="panel panel-shadow">
+    <div class="panel-title">
+      <span>ASK ME ANYTHING</span>
+      <button type="button" data-callout-close aria-label="Dismiss this note">✕</button>
+    </div>
+
+    <div class="panel-body">
+      <p class="text-small text-ink">
+        There is an AI down there trained on my writing. Ask it something, or
+        leave your email for the newsletter.
+      </p>
+
+      <p class="mt-3">
+        <button type="button" data-callout-open class="kicker widget-callout-open">
+          Open the chat &#8600;
+        </button>
+      </p>
+    </div>
+  </div>
+</div>
+
+<script is:inline>
+  (() => {
+    const KEY = 'widget-callout-dismissed';
+    const root = document.getElementById('widget-callout');
+    if (!root) return;
+
+    // A dismissal is permanent. Re-asking on every page view is nagging.
+    try {
+      if (localStorage.getItem(KEY) === '1') return;
+    } catch {
+      /* Private mode. Fall through and just behave as undismissed. */
+    }
+
+    let done = false;
+
+    const hide = (permanent) => {
+      root.hidden = true;
+      if (!permanent) return;
+      done = true;
+      try {
+        localStorage.setItem(KEY, '1');
+      } catch {
+        /* Nothing to do. The note is gone for this page either way. */
+      }
+    };
+
+    const launcher = () => document.querySelector('.cb-btn');
+
+    /*
+     * The widget mounts .cb-panel up front and toggles its visibility, so
+     * presence is not the test -- whether it is actually being painted is.
+     * offsetParent covers display:none on any ancestor in one check.
+     */
+    const isOpen = () => {
+      const panel = document.querySelector('.cb-panel');
+      return !!panel && panel.offsetParent !== null;
+    };
+
+    const sync = () => {
+      if (done) return;
+      if (isOpen()) {
+        // Not permanent: opening the chat is engagement, not rejection.
+        hide(false);
+        return;
+      }
+      if (launcher()) root.hidden = false;
+    };
+
+    root.querySelector('[data-callout-close]')?.addEventListener('click', () => hide(true));
+
+    root.querySelector('[data-callout-open]')?.addEventListener('click', () => {
+      const button = launcher();
+      if (button instanceof HTMLElement) button.click();
+      hide(false);
+    });
+
+    /*
+     * The widget script is async, so the launcher may arrive well after this
+     * runs, and the open/closed state changes without any event we can listen
+     * for. One observer covers both: appearance and visibility changes.
+     */
+    new MutationObserver(sync).observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['style', 'class'],
+    });
+
+    sync();
+  })();
+</script>

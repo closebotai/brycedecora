@@ -1,0 +1,66 @@
+---
+/**
+ * THE BREW COLUMN -- a pour-over, in three acts.
+ *
+ *   GRIND   a bean falls into the grinder; grounds gather in the dripper
+ *   BREW    the grinder leaves, the cup arrives, drips fall and it fills
+ *   REST    the dripper leaves too, and the full cup steams
+ *
+ * Only the apparatus each act needs is on screen. The column's footprint never
+ * changes -- parts fade rather than collapse, because a sticky element that
+ * reflows mid-scroll jitters under the reader.
+ *
+ * TWO MODES, ONE SET OF KEYFRAMES. In an article the sequence is driven by how
+ * far down the page you are; on the homepage it runs slowly on a loop. That is
+ * the only difference between them, and it is expressed as *where the timeline
+ * comes from* -- a scroll timeline, or a duration. Every stage boundary lives
+ * inside the keyframes themselves rather than in `animation-range`, so neither
+ * mode has to restate the choreography. See the `.brew` rules in global.css.
+ *
+ * Entirely decorative: the same progress is in the scrollbar. `aria-hidden`
+ * throughout, and it renders nothing at all where scroll timelines are
+ * unsupported rather than showing a half-brewed cup that never moves.
+ */
+interface Props {
+  /**
+   * Run the whole sequence on a slow timed loop instead of tying it to scroll
+   * position. For pages where the column is a fixture rather than a progress
+   * indicator.
+   */
+  loop?: boolean;
+  class?: string;
+}
+
+const { loop = false, class: className = '' } = Astro.props;
+---
+
+<div class:list={['brew', loop && 'brew--loop', className]} aria-hidden="true">
+  {/* Falls into the grinder, rotating on the way down. */}
+  <span class="brew-bean brew-stage"><i></i></span>
+
+  <span class="brew-part brew-grinder brew-stage"><i></i></span>
+
+  <span class="brew-part brew-dripper brew-stage">
+    <i></i>
+    <span class="brew-grounds brew-stage"><i></i></span>
+  </span>
+
+  {/*
+    The drip is two animations: the wrapper windows it to the brewing act, and
+    the inner element does the actual falling on its own fast loop. Splitting
+    them is what lets a drip fall at a drip's rate rather than at the reader's.
+  */}
+  <span class="brew-drip brew-stage"><i></i></span>
+
+  <span class="brew-part brew-mug brew-stage">
+    <span class="brew-coffee brew-stage"></span>
+    <i></i>
+
+    {/* Same split as the drip: wrapper windows the act, wisps rise on a loop. */}
+    <span class="brew-steam brew-stage">
+      <i></i>
+      <i></i>
+      <i></i>
+    </span>
+  </span>
+</div>

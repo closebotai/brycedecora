@@ -1,0 +1,133 @@
+---
+/**
+ * Site header.
+ *
+ * NO JAVASCRIPT, AND NO MOBILE MENU COMPONENT.
+ *
+ * The constitution says a hydration directive is only justified when the
+ * interaction cannot reasonably be built from native HTML and CSS. The two
+ * primary links fit on a small screen unaided, so there is nothing to
+ * disclose, let alone anything needing JS to disclose it.
+ *
+ * THE SOCIAL ROW IS HIDDEN BELOW `md`, AND THAT IS THE REASON THE ABOVE STILL
+ * HOLDS. Five links plus a wordmark and a toggle do not fit on a 375px phone;
+ * they wrap to three lines, and this header is `sticky`, so those lines would
+ * eat a fixed slice of every viewport on every page for the whole scroll. The
+ * profiles are supplementary and the footer carries the same three on every
+ * page, so hiding them narrow costs a phone user nothing and keeps the header
+ * one line. No content is lost, which is what makes `display: none` honest
+ * here rather than a dodge.
+ *
+ * If the PRIMARY nav ever outgrows its line, the next step is a native
+ * <details>/<summary> disclosure -- still zero JS. An island is the last
+ * resort, not the first.
+ */
+import ThemeToggle from '../ui/ThemeToggle.astro';
+import { primaryNav } from '../../data/navigation';
+import { person } from '../../data/person';
+import { SITE_NAME } from '../../data/site';
+import { isActivePath } from '../../utils/urls';
+
+const current = Astro.url.pathname;
+---
+
+{/*
+  The hairline is full-strength ink, not a polite grey. See DESIGN.md -- a 1px
+  full-contrast rule is the most characteristic mark in the system, and
+  softening borders is the fastest route back to a generic site.
+*/}
+{/*
+  Sticky so navigation stays reachable through a long article. It was
+  originally made sticky to host a reading-progress bean that rolled along the
+  bottom hairline; that moved to the brew column in the margin, but keeping
+  the nav in reach on a page you scroll for several screens stands on its own.
+*/}
+<header class="sticky top-0 z-50 border-b border-line bg-surface">
+  <div
+    class="mx-auto flex max-w-wide flex-wrap items-center justify-between gap-4 px-gutter py-3"
+  >
+    <a
+      href="/"
+      class="font-mono text-kicker font-normal tracking-[0.08em] text-ink uppercase no-underline"
+    >
+      {SITE_NAME}
+    </a>
+
+    <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
+      <nav aria-label="Primary">
+        <ul class="flex flex-wrap items-center gap-x-6 gap-y-2">
+        {
+          primaryNav.map((item) => {
+            const active = isActivePath(item.href, current);
+            return (
+              <li>
+                <a
+                  href={item.href}
+                  aria-current={active ? 'page' : undefined}
+                  class:list={[
+                    'font-mono text-kicker tracking-[0.08em] uppercase no-underline hover:text-accent-hover',
+                    /*
+                     * The current page is marked by an underline as well as by
+                     * colour. Colour is never the only carrier of meaning.
+                     */
+                    active
+                      ? 'text-ink underline decoration-accent decoration-2 underline-offset-4'
+                      : 'text-ink-muted',
+                  ]}
+                >
+                  {item.label}
+                </a>
+              </li>
+            );
+          })
+        }
+        </ul>
+      </nav>
+
+      {
+        /*
+          Hidden below `md` -- see the note at the top of this file.
+
+          Separated from the primary nav by an ink hairline rather than by
+          extra space. DESIGN.md says to separate with whitespace first and
+          stop as soon as it reads, but at this density it did not read: the
+          two navs are the same size, weight and case, so a wider gap looked
+          like an uneven gap rather than a boundary. A 1px full-strength rule
+          is the next step and the most characteristic mark in the system.
+
+          These are external and can never be the current page, so unlike the
+          primary nav there is no aria-current or active treatment here.
+
+          rel="me" repeats the footer's identity claim. Asserting it twice on
+          one page is harmless -- verifiers look for the link, not for exactly
+          one of it -- and omitting it on the more prominent of the two
+          placements would be the odd choice.
+        */
+      }
+      {
+        person.socialProfiles.length > 0 && (
+          <nav
+            aria-label="Social profiles"
+            class="hidden md:block md:border-l md:border-line md:pl-6"
+          >
+            <ul class="flex items-center gap-x-6">
+              {person.socialProfiles.map((profile) => (
+                <li>
+                  <a
+                    href={profile.url}
+                    rel="me noopener"
+                    class="font-mono text-kicker tracking-[0.08em] text-ink-muted uppercase no-underline hover:text-accent-hover"
+                  >
+                    {profile.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )
+      }
+
+      <ThemeToggle />
+    </div>
+  </div>
+</header>

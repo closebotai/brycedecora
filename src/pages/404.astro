@@ -1,0 +1,63 @@
+---
+/**
+ * 404 page.
+ *
+ * Astro emits this as dist/404.html, and `not_found_handling: "404-page"` in
+ * wrangler.jsonc makes Cloudflare serve it with a real 404 status. Without
+ * that setting, unmatched URLs would return 200 and become soft 404s.
+ */
+import PageLayout from '../layouts/PageLayout.astro';
+import Bean from '../components/ui/Bean.astro';
+import { primaryNav } from '../data/navigation';
+---
+
+<PageLayout
+  seo={{
+    title: 'Page not found — Bryce DeCora',
+    description:
+      'That page does not exist. It may have moved, or the link that brought you here may be out of date.',
+    robots: { index: false, follow: true },
+    /*
+     * Astro routes this page at /404, but it is EMITTED as dist/404.html and
+     * served from that path. Without this override the page would describe
+     * itself as living at /404/, a URL that does not exist.
+     */
+    canonicalPath: '/404.html',
+    /*
+     * Separately: Cloudflare serves this body in response to whatever URL was
+     * requested, so it has no single URL to be canonical to. See the note on
+     * `noCanonical` in src/schemas/seo.ts.
+     */
+    noCanonical: true,
+  }}
+  breadcrumbs={false}
+  heading="Page not found"
+  lede="That page does not exist. It may have moved, or the link that brought you here may be out of date."
+>
+  {/*
+    The mascot at full size. A 404 is the one page with nothing to say and all
+    the room in the world to say it in, which makes it the right home for the
+    biggest bean on the site.
+  */}
+  <p class="mb-10 flex items-center gap-6">
+    <Bean size="xl" spin />
+    <span class="kicker">Nothing roasting here</span>
+  </p>
+
+  <nav aria-label="Suggested pages">
+    <ul class="space-y-2">
+      <li>
+        <a href="/" class="text-accent no-underline hover:text-accent-hover">Homepage</a>
+      </li>
+      {
+        primaryNav.map((item) => (
+          <li>
+            <a href={item.href} class="text-accent no-underline hover:text-accent-hover">
+              {item.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
+</PageLayout>

@@ -1,0 +1,46 @@
+---
+/**
+ * The coffee bean mascot.
+ *
+ * Pixel art painted by a single element's box-shadow. The pixel data and the
+ * favicon are both generated from one ASCII map by scripts/generate-bean.mjs --
+ * run `pnpm bean` after changing it. See the `.bean` rules in global.css for
+ * how the scaling works.
+ *
+ * IT IS ALWAYS DECORATIVE. The bean never carries meaning that is not already
+ * in the text beside it, so it is `aria-hidden` without exception. If a bean
+ * ever needs to mean something, give it a label at the call site rather than
+ * relaxing this -- a screen reader announcing "image" 15 times down a page is
+ * the failure mode.
+ */
+interface Props {
+  /** Rendered size. sm = 15px, md = 30px, lg = 90px, xl = 150px. */
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+  /**
+   * Darken from raw to dark roast as it crosses the viewport. Pure CSS, driven
+   * by a scroll timeline; static wherever that is unsupported.
+   */
+  roasting?: boolean;
+  /**
+   * Turn continuously, using the generated rotation frames. Timed rather than
+   * scroll-driven, so it is reserved for the 404 -- see DESIGN.md.
+   */
+  spin?: boolean;
+  class?: string;
+}
+
+const { size = 'sm', roasting = false, spin = false, class: className = '' } = Astro.props;
+---
+
+<span
+  class:list={[
+    'bean',
+    `bean--${size}`,
+    roasting && 'bean--roasting',
+    spin && 'bean--spin',
+    className,
+  ]}
+  aria-hidden="true"
+>
+  <i></i>
+</span>

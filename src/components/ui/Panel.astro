@@ -1,0 +1,66 @@
+---
+/**
+ * The window panel -- the signature component of the display register.
+ *
+ * Dark title bar, full-strength ink border, zero radius, hard offset shadow.
+ * See DESIGN.md; the three things that make it work are exactly the three a
+ * well-meaning refinement would soften.
+ *
+ * SEMANTICS ARE THE CALLER'S DECISION, AND THEY ARE EXPLICIT.
+ *
+ * AGENTS.md: a <section> is a thematic group that HAS an accessible heading;
+ * anything else is a <div>. So this component does not guess. Pass
+ * `headingLevel` and the panel becomes a <section> whose title bar *is* the
+ * heading element -- small and uppercase, but a real, outline-bearing heading.
+ * Omit it and the panel is ornamental: a <div>, with the title as plain text.
+ *
+ * Getting this wrong in either direction is a defect. A <section> with no
+ * heading is landmark noise; a purely decorative panel rendered as a <section>
+ * puts its ornamental title bar into the document outline, where a screen
+ * reader will read it out as though it were structure.
+ */
+interface Props {
+  /** Title-bar label. Reads like shipped software: 'PROJECTS', 'COLOPHON'. */
+  title: string;
+  /**
+   * Render as a <section> with the title as this heading level. Omit for an
+   * ornamental panel, which renders a <div>.
+   */
+  headingLevel?: 2 | 3 | 4;
+  /** Right-aligned metadata in the title bar. A version, a date, a count. */
+  meta?: string;
+  /** Hard offset shadow. Use on panels that overlap, to separate them. */
+  shadow?: boolean;
+  /** Extra classes on the outer element -- positioning belongs to the caller. */
+  class?: string;
+}
+
+const { title, headingLevel, meta, shadow = false, class: className = '' } = Astro.props;
+
+const Wrapper = headingLevel ? 'section' : 'div';
+const Heading = headingLevel ? (`h${headingLevel}` as const) : 'span';
+
+/*
+ * The heading carries the accessible name for the section. Derived from the
+ * title so it is stable across a page without the caller inventing ids.
+ */
+const headingId = headingLevel
+  ? `panel-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`
+  : undefined;
+---
+
+<Wrapper
+  class:list={['panel', shadow && 'panel-shadow', className]}
+  aria-labelledby={headingId}
+>
+  <div class="panel-title">
+    <Heading id={headingId} class="font-mono text-micro font-normal tracking-[0.06em]">
+      {title}
+    </Heading>
+    {meta && <span aria-hidden="true">{meta}</span>}
+  </div>
+
+  <div class="panel-body">
+    <slot />
+  </div>
+</Wrapper>

@@ -1,0 +1,143 @@
+---
+/**
+ * A single article.
+ *
+ * Adds the BlogPosting node automatically -- an article page cannot be
+ * published without its structured data, because emitting it is the layout's
+ * job, not the author's.
+ *
+ * Wraps content in <article>, which is correct here: a post is independently
+ * meaningful outside the page it sits on. Note that <main> already exists in
+ * BaseLayout; this does not add a second one.
+ */
+import BaseLayout from './BaseLayout.astro';
+import type { HeadedLayoutProps } from './types';
+import BrewColumn from '../components/ui/BrewColumn.astro';
+import { person } from '../data/person';
+import { buildArticle, type JsonLdNode } from '../utils/schema';
+
+interface Props extends HeadedLayoutProps {
+  datePublished: Date;
+  dateModified?: Date;
+  tags?: readonly string[];
+  /** Absolute URL of the primary image, when the article has one. */
+  imageUrl?: string;
+}
+
+/*
+ * Articles default to the WIDE measure, not the reading one. The reading
+ * measure is still enforced -- `.prose` caps itself at --container-content --
+ * but the extra width is what the byline rail occupies. Without it the rail
+ * would eat the reading column.
+ */
+const {
+  heading,
+  lede,
+  datePublished,
+  dateModified,
+  tags = [],
+  imageUrl,
+  width = 'wide',
+  ...base
+} = Astro.props;
+
+const schema = ({ site, canonical }: { site: URL; canonical: string }): JsonLdNode[] => [
+  buildArticle({
+    site,
+    canonical,
+    title: heading,
+    description: base.seo.description,
+    datePublished,
+    dateModified,
+    image: imageUrl,
+    keywords: tags,
+  }),
+];
+
+/** Machine-readable dates for <time>, matching what the JSON-LD reports. */
+const publishedIso = datePublished.toISOString();
+const modifiedIso = dateModified?.toISOString();
+
+const dateFormat = new Intl.DateTimeFormat('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+  timeZone: 'UTC',
+});
+---
+
+<BaseLayout
+  {...base}
+  width={width}
+  breadcrumbLabel={heading}
+  datePublished={datePublished}
+  dateModified={dateModified}
+  schema={schema}
+>
+  <slot name="head" slot="head" />
+
+  {/*
+    TWO COLUMNS ON DESKTOP: byline rail left, article right, separated by a
+    hairline. Below `lg` the grid does not apply and it is an ordinary stack.
+
+    DOM order is title -> byline -> body, which is both the right reading order
+    and the right announcement order. The rail is moved left by grid placement
+    rather than by coming first in the markup, so nothing is reordered for a
+    screen reader to get the visual arrangement.
+
+    The rail is NOT <aside>. AGENTS.md reserves that for genuinely supplementary
+    content, and a byline is the article's own metadata -- making it a
+    complementary landmark would be exactly the tag soup that rule warns about.
+  */}
+  <article class="lg:grid lg:grid-cols-[12rem_minmax(0,1fr)] lg:gap-x-12">
+    <header class="mb-10 lg:col-start-2 lg:row-start-1">
+      <h1 class="text-title text-ink">{heading}</h1>
+      {lede && <p class="mt-4 text-lg text-ink-muted">{lede}</p>}
+    </header>
+
+    <div
+      class="mb-10 border-b border-rule pb-6 lg:col-start-1 lg:row-start-1 lg:row-span-2 lg:mb-0 lg:border-b-0 lg:border-r lg:pr-12 lg:pb-0"
+    >
+      <p class="text-small font-semibold text-ink">{person.name}</p>
+      <p class="kicker mt-1">{person.jobTitle}</p>
+
+      <p class="kicker mt-6">
+        <time datetime={publishedIso}>{dateFormat.format(datePublished)}</time>
+      </p>
+      {
+        modifiedIso && modifiedIso !== publishedIso && (
+          <p class="kicker mt-1">
+            {'Updated '}
+            <time datetime={modifiedIso}>{dateFormat.format(dateModified)}</time>
+          </p>
+        )
+      }
+
+      {
+        tags.length > 0 && (
+          <ul class="kicker mt-6 space-y-1">
+            {tags.map((tag) => (
+              <li>{tag}</li>
+            ))}
+          </ul>
+        )
+      }
+
+      {/*
+        The brew column brews as the article is read. Sticky so it stays in
+        view for the whole piece, and only on wide screens where the rail
+        actually exists. See BrewColumn.astro.
+      */}
+      <div class="sticky top-24 mt-12 hidden lg:block">
+        <BrewColumn />
+      </div>
+    </div>
+
+    <div class="prose lg:col-start-2 lg:row-start-2">
+      <slot />
+    </div>
+  </article>
+
+  {/* Related links come from the content model, not from per-page invention. */}
+  <slot name="related" />
+</BaseLayout>

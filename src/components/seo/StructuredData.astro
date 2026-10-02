@@ -1,0 +1,25 @@
+---
+/**
+ * Emits the page's JSON-LD as a single `@graph` document.
+ *
+ * One graph rather than several detached <script> blocks, so that `@id`
+ * cross-references between nodes actually resolve -- a Person referenced by an
+ * Article has to be findable in the same document.
+ */
+import { buildGraph, type JsonLdNode } from '../../utils/schema';
+
+interface Props {
+  nodes: readonly JsonLdNode[];
+}
+
+const { nodes } = Astro.props;
+
+/**
+ * Escape `<` so a string value containing `</script>` cannot break out of the
+ * script element. JSON.stringify does not do this, and `set:html` does not
+ * escape -- so it has to happen here.
+ */
+const json = nodes.length > 0 ? JSON.stringify(buildGraph(nodes)).replace(/</g, '\\u003c') : null;
+---
+
+{json && <script type="application/ld+json" is:inline set:html={json} />}

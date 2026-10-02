@@ -1,0 +1,85 @@
+---
+/**
+ * Generic static page: home, about, contact, thanks.
+ *
+ * Owns the page's single <h1>. Pages pass `heading` rather than writing a
+ * heading element, so "exactly one H1" holds by construction.
+ *
+ * It also owns the choice between the two type registers (see DESIGN.md).
+ * That branch lives here rather than in a second layout on purpose: a
+ * DisplayLayout would duplicate the heading contract, and a duplicated contract
+ * is how a layout quietly starts dropping a prop it was meant to forward.
+ */
+import BaseLayout from './BaseLayout.astro';
+import type { HeadedLayoutProps } from './types';
+
+type Props = HeadedLayoutProps;
+
+const { heading, lede, kicker, register = 'reading', ...base } = Astro.props;
+
+const display = register === 'display';
+
+/*
+ * Checked rather than rendered unconditionally: an empty slot would still
+ * create the second grid column and pull the heading off its measure on every
+ * page that does not pass one.
+ */
+const hasAside = display && Astro.slots.has('hero-aside');
+
+/*
+ * In 'full' the layout's own header has to restore the measure, since <main>
+ * gives it neither max-width nor gutter.
+ */
+const full = base.width === 'full';
+const headerMeasure = full ? 'mx-auto w-full max-w-wide px-gutter pt-12' : '';
+---
+
+<BaseLayout {...base}>
+  <slot name="head" slot="head" />
+
+  <header class:list={[display ? 'mb-12' : 'mb-10', headerMeasure]}>
+    {
+      display ? (
+        <div
+          class:list={[
+            'py-10',
+            hasAside && 'lg:grid lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-x-16',
+          ]}
+        >
+          <div>
+            {kicker && (
+              <p class="kicker mb-6 flex items-baseline">
+                <span>{kicker}</span>
+                <span class="leader-fill" aria-hidden="true" />
+              </p>
+            )}
+            {/*
+              Leading below 1 is the move, not a bug. See DESIGN.md before
+              relaxing it to something comfortable.
+            */}
+            <h1 class="text-display text-ink">{heading}</h1>
+            {lede && <p class="mt-8 max-w-content text-lg text-ink-muted">{lede}</p>}
+          </div>
+
+          {/*
+            Desktop only. The display heading already fills a phone screen, and
+            an ornament competing with it there costs more than it adds.
+          */}
+          {hasAside && (
+            <div class="hidden lg:block">
+              <slot name="hero-aside" />
+            </div>
+          )}
+        </div>
+      ) : (
+        <Fragment>
+          {kicker && <p class="kicker mb-4">{kicker}</p>}
+          <h1 class="text-title text-ink">{heading}</h1>
+          {lede && <p class="mt-4 text-lg text-ink-muted">{lede}</p>}
+        </Fragment>
+      )
+    }
+  </header>
+
+  <slot />
+</BaseLayout>

@@ -1,0 +1,39 @@
+# build output
+dist/
+.astro/
+
+# generated SEO manifest (rebuilt on every build)
+.seo/
+
+# dependencies
+node_modules/
+
+# test artifacts
+test-results/
+playwright-report/
+.lighthouseci/
+
+# cloudflare
+.wrangler/
+
+# environment
+#
+# Ignore EVERY .env variant, then re-admit the template. Listing names one at a
+# time is the failure mode: Astro also reads `.env.local`, `.env.development`
+# and `.env.[mode].local`, so a value dropped into any of those would have been
+# committed. The catch-all plus a single negation cannot miss one.
+#
+# `.env.example` is the opposite -- it must be tracked. It carries no values,
+# only the variable names and where to find each one.
+.env
+.env.*
+!.env.example
+.dev.vars
+
+# macOS
+.DS_Store
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*

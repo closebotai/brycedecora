@@ -1,0 +1,30 @@
+---
+/**
+ * Post-submission confirmation page.
+ *
+ * This page exists partly to exercise the noindex path end to end. It is
+ * listed in NOINDEX_ROUTES in src/data/site.ts, and because that one list
+ * feeds both the sitemap filter and the robots meta tag, it is automatically
+ * excluded from the sitemap AND marked noindex -- with no per-page setting
+ * here to forget. tests/seo/indexability.spec.ts verifies both.
+ */
+import PageLayout from '../layouts/PageLayout.astro';
+---
+
+<PageLayout
+  seo={{
+    title: 'Thanks for getting in touch',
+    description:
+      'Your message has been received. I read everything that comes in and will reply as soon as I am able.',
+  }}
+  heading="Thanks for getting in touch"
+  lede="Your message has been received."
+>
+  <p class="text-ink-muted">
+    I read everything that comes in and will reply as soon as I can.
+  </p>
+
+  <p class="mt-6">
+    <a href="/" class="text-accent no-underline hover:text-accent-hover">Back to the homepage</a>
+  </p>
+</PageLayout>

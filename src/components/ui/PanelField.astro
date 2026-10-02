@@ -1,0 +1,38 @@
+---
+/**
+ * Full-bleed dithered field -- the one loud colour moment on a page.
+ *
+ * The texture is a 1-bit halftone pattern, never a gradient. See the `.field`
+ * rule in global.css for how it is built and DESIGN.md for why.
+ *
+ * Expects to sit in a layout using `width="full"`, where <main> has no
+ * max-width and no gutter, so the colour can reach both edges without a
+ * negative-margin trick. It restores the measure itself for its contents.
+ *
+ * ONE per page, two at the absolute most, and only in the display register.
+ */
+interface Props {
+  /** Optional mono kicker rendered above the contents. */
+  kicker?: string;
+  class?: string;
+}
+
+const { kicker, class: className = '' } = Astro.props;
+---
+
+<div class:list={['field', className]}>
+  {/*
+    An enormous bean, cropped by the band's own edges and parallaxing inside
+    it. Purely decorative, and deliberately behind everything else.
+  */}
+  <span class="bean-watermark" aria-hidden="true"><i></i></span>
+
+  <div class="relative z-10 mx-auto w-full max-w-wide px-gutter py-16">
+    {
+      kicker && (
+        <p class="kicker mb-8 text-field-ink" set:text={kicker} />
+      )
+    }
+    <slot />
+  </div>
+</div>

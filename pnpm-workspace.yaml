@@ -1,0 +1,11 @@
+# Build scripts are opt-in under pnpm. Both of these are required:
+#   esbuild  - used by Vite/Astro during the build
+#   workerd  - the Cloudflare Workers runtime that backs `wrangler dev`,
+#              which is how we verify the site exactly as Cloudflare serves it
+allowBuilds:
+  esbuild: true
+  workerd: true
+
+minimumReleaseAgeExclude:
+  - miniflare@5.20260926.1-alpha
+  - wrangler@4.143.1

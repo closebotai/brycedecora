@@ -1,0 +1,32 @@
+# Response headers, applied by Cloudflare Workers Assets.
+#
+# Cloudflare CONSUMES this file rather than serving it, so it never appears as
+# a route. It lives in public/ because that is what gets copied into dist/,
+# which is the assets directory wrangler.jsonc points at.
+#
+#
+# WHAT IS DELIBERATELY NOT HERE
+#
+#   Strict-Transport-Security   set at Cloudflare (SSL/TLS -> Edge Certificates
+#                               -> HSTS). It is emitted at the edge on every
+#                               response including redirects, which this file
+#                               cannot reach. One owner; the edge is the better
+#                               one.
+#   X-Content-Type-Options      set at Cloudflare too, by the "No-Sniff Header"
+#                               toggle inside that same HSTS dialog.
+#
+# Do not add either here as well. Two sources would mean two copies of the same
+# header on every response, and the next person to read this file would have no
+# way to tell which one was authoritative.
+#
+#   Content-Security-Policy     not set, deliberately. The CloseBot widget
+#                               injects its own stylesheet and sets `background`
+#                               inline at runtime, so script-src/style-src would
+#                               need 'unsafe-inline' to keep it working, which
+#                               gives up most of what a CSP buys. Revisit if the
+#                               widget ever gains real theming support -- see
+#                               the note in src/styles/closebot-widget.css.
+
+/*
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: DENY

@@ -1,0 +1,14 @@
+# https://brycedecora.com/.well-known/security.txt
+#
+# RFC 9116. A published channel for reporting a vulnerability, so a researcher
+# does not have to guess at an address or give up.
+#
+# EXPIRES IS LOAD-BEARING AND THIS FILE GOES STALE ON ITS OWN. RFC 9116 makes
+# the field mandatory and tells consumers to ignore an expired file, so an
+# out-of-date security.txt is worse than none at all -- it reads as an
+# abandoned channel. Renew it, do not let it lapse.
+
+Contact: mailto:info@closebot.ai
+Expires: 2027-10-01T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://brycedecora.com/.well-known/security.txt

@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Deployment is handled by Cloudflare's Git integration (Workers Builds), not
+# from here -- so no deploy credentials ever live in GitHub Actions.
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+# The CloseBot widget's account id. A *variable*, not a secret -- it is served
+# to every visitor inside a <script src>, so it is public by construction. It
+# is set here only so CI builds the same pages production does; without it the
+# widget is omitted and the e2e suite adapts rather than failing.
+env:
+  CLOSEBOT_SOURCE: ${{ vars.CLOSEBOT_SOURCE }}
+
+jobs:
+  verify:
+    name: Check, build, and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          # Pinned to the LTS line via .nvmrc. Local development may be on a
+          # newer odd-numbered Node; CI should not be.
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type check
+        run: pnpm check
+
+      - name: Build
+        # Also writes .seo/manifest.json, which the SEO suite asserts against.
+        run: pnpm build
+
+      - name: SEO assertions
+        run: pnpm test:seo
+
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: End-to-end tests
+        # Runs against `wrangler dev` -- the real Workers runtime serving
+        # ./dist -- so trailing-slash redirects and 404 status codes are
+        # verified the way Cloudflare will actually serve them.
+        run: pnpm test:e2e
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+      - name: Upload SEO manifest
+        # Useful for diagnosing a failure without reproducing the build.
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: seo-manifest
+          path: .seo/manifest.json
+          retention-days: 7
+
+  lighthouse:
+    name: Lighthouse budgets
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: verify
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Run Lighthouse CI
+        # Thresholds: performance 90, accessibility 95, best practices 95,
+        # SEO 100. SEO is the only one held at a perfect score, because every
+        # signal it measures is fully within our control.
+        run: pnpm exec lhci autorun

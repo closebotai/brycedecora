@@ -1,0 +1,52 @@
+---
+/**
+ * Light/dark toggle.
+ *
+ * Markup only. The behaviour lives in the bootstrap script in BaseLayout.astro,
+ * because switching the theme has to happen BEFORE first paint and a script
+ * down here in the body would flash the wrong palette on every navigation.
+ * Keeping both halves in one inline script also keeps the page at one script
+ * tag rather than two.
+ *
+ * HIDDEN UNTIL JAVASCRIPT CONFIRMS IT WORKS. The `hidden` attribute is in the
+ * server-rendered HTML and the bootstrap removes it. A control that silently
+ * does nothing is worse than no control, and anyone with JS disabled still gets
+ * a correct dark theme from `prefers-color-scheme` -- they simply cannot
+ * override it, so they are not offered a switch that cannot move.
+ *
+ * The label is set by the bootstrap too, since it names the theme the button
+ * switches TO and only the resolved theme knows which that is.
+ *
+ * THE BUTTON IS SIZED TO ITS WIDEST LABEL, NOT TO ITS CURRENT ONE. The label
+ * alternates between "light" and "dark", and those are different widths, so
+ * the button used to resize on every click and shove the rest of the header
+ * row sideways -- a layout shift the user causes, on a sticky element, on
+ * every page.
+ *
+ * It is done with an invisible sizer rather than a fixed width or a `ch`
+ * measurement. A hard-coded width goes wrong the moment the label or the
+ * tracking changes; `ch` is only exact while the text is genuinely monospaced,
+ * and the mono face is deliberately NOT preloaded (see AGENTS.md), so early in
+ * the page's life this renders in a proportional fallback where `ch` would
+ * measure the wrong thing. Stacking both labels in one grid cell makes the
+ * button as wide as the longer string under whatever font is actually
+ * resolved, with no arithmetic to get stale.
+ */
+---
+
+<button
+  type="button"
+  id="theme-toggle"
+  hidden
+  class="kicker cursor-pointer border border-line px-2 py-1 text-ink hover:text-accent-hover"
+>
+  <span class="grid">
+    {/*
+      Both spans occupy the same grid cell, so the cell takes the width of the
+      wider one. `invisible` is visibility:hidden, which still reserves space --
+      `hidden` would collapse it and defeat the whole point.
+    */}
+    <span class="col-start-1 row-start-1" data-theme-label>Theme</span>
+    <span class="invisible col-start-1 row-start-1" aria-hidden="true">Light</span>
+  </span>
+</button>

@@ -1,0 +1,1497 @@
+@import 'tailwindcss';
+
+/*
+ * Third-party overrides. Kept in its own file so this one stays a description
+ * of our system rather than a patch set for someone else's. See the long note
+ * at the top of it before touching any selector in there.
+ */
+@import './closebot-widget.css';
+
+/* The mascot's pixel data. Generated -- see scripts/generate-bean.mjs. */
+@import './bean.css';
+
+/**
+ * Design tokens. The values are specified in DESIGN.md; this file is where they
+ * become real. Components reference semantic tokens and never literal values,
+ * which is what makes the dark theme a swap rather than a branch in every
+ * component.
+ *
+ * Tailwind v4 defines theme values in CSS, not in a JS config file. The
+ * @astrojs/tailwind integration is retired -- Tailwind is wired in through
+ * the @tailwindcss/vite plugin in astro.config.ts.
+ *
+ * TWO FAMILIES, ONE SUPERFAMILY. IBM Plex Sans and IBM Plex Mono are loaded by
+ * the Astro Fonts API (see `fonts` in astro.config.ts) which subsets them,
+ * inlines the @font-face rules, and generates metric-matched fallbacks so there
+ * is no layout shift while they swap. The --font-plex-* variables below are
+ * produced by that integration. See the web-font note in AGENTS.md for why a
+ * font request is justified here when the default answer is no.
+ */
+@theme {
+  --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+
+  /*
+   * Every hue sits in the warm 25-90 band. That single constraint carries the
+   * identity; it is not a preference to be relaxed for one component.
+   */
+  --color-surface: oklch(0.96 0.022 85); /* cream */
+  --color-surface-raised: oklch(0.92 0.021 85); /* panel body -- only inside a panel */
+  --color-chrome: oklch(0.25 0.012 65); /* panel title bars */
+  --color-chrome-ink: oklch(0.96 0.022 85);
+  --color-ink: oklch(0.19 0.01 65);
+  --color-ink-muted: oklch(0.47 0.012 70); /* secondary text, never body copy */
+  --color-line: oklch(0.19 0.01 65); /* hairlines are full-strength ink */
+  --color-rule: oklch(0.8 0.016 82); /* soft rule, prose only */
+  --color-accent: oklch(0.4 0.075 55); /* tobacco */
+  --color-accent-hover: oklch(0.32 0.07 55);
+
+  /*
+   * THE FIELD IS THE SAME IN BOTH THEMES, and it is dark enough to carry light
+   * text. That is a contrast decision, not an aesthetic one.
+   *
+   * A mid-toned band is the trap: at L 0.47 it was too light for ink (2.7:1)
+   * and too dark for cream, so nothing sat on it legibly. Worse, Lighthouse
+   * scored it 100 -- its contrast audit did not catch a real WCAG failure, and
+   * it only ever tests the light theme anyway.
+   *
+   * Pinning the field dark in both themes and giving it a dedicated text token
+   * makes the pairing fixed: cream on umber, ~7.5:1, no matter the theme.
+   */
+  --color-field: oklch(0.42 0.055 65); /* raw umber, full-bleed fields only */
+  --color-field-ink: oklch(0.96 0.022 85); /* the ONLY text colour on a field */
+
+  /*
+   * Two registers, nothing comfortable in between. Leading below 1 on the
+   * display size is the move, not a bug: at this size the lines nearly collide,
+   * and that near-collision is most of what makes the register read as designed
+   * rather than merely large. The clamp keeps it enormous RELATIVE to the
+   * viewport instead of huge on a desktop and broken on a phone.
+   */
+  --text-display: clamp(3rem, 12vw, 7.5rem);
+  --text-display--line-height: 0.82;
+  --text-display--letter-spacing: -0.03em;
+  --text-display--font-weight: 600;
+
+  --text-title: 2.25rem;
+  --text-title--line-height: 1.05;
+  --text-title--letter-spacing: -0.01em;
+  --text-title--font-weight: 600;
+
+  --text-heading: 1.5rem;
+  --text-heading--line-height: 1.3;
+  --text-heading--font-weight: 600;
+
+  --text-body: 1rem;
+  --text-body--line-height: 1.6;
+
+  --text-small: 0.875rem;
+  --text-small--line-height: 1.5;
+
+  /* Mono, uppercase. Marks machine-adjacent information, not decoration. */
+  --text-kicker: 0.6875rem;
+  --text-kicker--line-height: 1.2;
+  --text-kicker--letter-spacing: 0.08em;
+
+  --text-micro: 0.625rem; /* panel title bars only */
+  --text-micro--line-height: 1.1;
+  --text-micro--letter-spacing: 0.06em;
+
+  --spacing-gutter: 1.5rem;
+  --container-content: 38rem;
+  --container-wide: 72rem;
+}
+
+/**
+ * Dark theme.
+ *
+ * Written as plain :root overrides, NOT as a second @theme block. Tailwind v4
+ * hoists every @theme it finds to the top level and merges them, so a nested
+ * one silently loses its media query and the last definition wins
+ * unconditionally -- which is exactly what used to happen here: the site
+ * shipped the dark palette to everyone and had no light mode at all.
+ *
+ * Overriding the variables Tailwind already emitted to :root is the supported
+ * approach, and every utility picks the new value up automatically.
+ *
+ * The dark surface is a WARM near-black. A blue-tinted charcoal would undo the
+ * one constraint the whole palette rests on.
+ *
+ * TWO SELECTORS, ONE PALETTE. The declarations below are deliberately
+ * duplicated, because the two cases cannot be expressed as one selector:
+ *
+ *   1. The system preference, for anyone who has not chosen -- and for anyone
+ *      with JavaScript disabled, who never gets the chance to. Scoped with
+ *      :not([data-theme='light']) so an explicit choice of light still wins.
+ *   2. An explicit choice, stored in localStorage and applied to the <html>
+ *      element before first paint. See the bootstrap in BaseLayout.astro.
+ *
+ * CSS has no way to share a declaration block across a media query and a plain
+ * selector. Keep the two lists identical; changing one and not the other is
+ * the failure mode.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --color-surface: oklch(0.19 0.009 70);
+    --color-surface-raised: oklch(0.25 0.01 70);
+    --color-chrome: oklch(0.92 0.014 80);
+    --color-chrome-ink: oklch(0.19 0.009 70);
+    --color-ink: oklch(0.92 0.014 80);
+    --color-ink-muted: oklch(0.67 0.014 75);
+    --color-line: oklch(0.92 0.014 80);
+    --color-rule: oklch(0.38 0.011 70);
+    --color-accent: oklch(0.72 0.075 62);
+    --color-accent-hover: oklch(0.82 0.065 65);
+    /* Field and field-ink do NOT invert. See the note in @theme. */
+  }
+}
+
+:root[data-theme='dark'] {
+  --color-surface: oklch(0.19 0.009 70);
+  --color-surface-raised: oklch(0.25 0.01 70);
+  --color-chrome: oklch(0.92 0.014 80);
+  --color-chrome-ink: oklch(0.19 0.009 70);
+  --color-ink: oklch(0.92 0.014 80);
+  --color-ink-muted: oklch(0.67 0.014 75);
+  --color-line: oklch(0.92 0.014 80);
+  --color-rule: oklch(0.38 0.011 70);
+  --color-accent: oklch(0.72 0.075 62);
+  --color-accent-hover: oklch(0.82 0.065 65);
+  /* Field and field-ink do NOT invert. See the note in @theme. */
+}
+
+/*
+ * Colour-scheme tells the browser which built-in UI to render: form controls,
+ * scrollbars, and the canvas behind the page during navigation. Without it a
+ * dark page flashes a white scrollbar and a white gutter between loads.
+ */
+:root {
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+  }
+}
+
+/**
+ * The dither.
+ *
+ * Texture comes from a 1-bit halftone pattern, never a gradient -- it is the
+ * strongest single anti-default signal in the system. An 8x8 ordered-dither
+ * cell as an inline SVG data URI: zero requests, ~200 bytes, tiles infinitely.
+ *
+ * Declared outside @theme because it generates no utility and Tailwind has no
+ * namespace for it.
+ */
+:root {
+  --dither-cell: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' shape-rendering='crispEdges'%3E%3Cpath d='M0 0h1v1H0zM4 0h1v1H4zM2 2h1v1H2zM6 2h1v1H6zM0 4h1v1H0zM4 4h1v1H4zM2 6h1v1H2zM6 6h1v1H6z' fill='%23000'/%3E%3C/svg%3E");
+}
+
+/**
+ * CROSS-DOCUMENT VIEW TRANSITIONS.
+ *
+ * Two lines gives every navigation on this multi-page static site a smooth
+ * transition, with no router, no framework and no JavaScript. Browsers without
+ * support ignore the rule and navigate normally, so there is nothing to
+ * feature-detect and nothing to fall back to.
+ *
+ * This is the whole reason the site can stay multi-page: the usual argument for
+ * an SPA is that navigations feel abrupt, and this removes it for free.
+ */
+@view-transition {
+  navigation: auto;
+}
+
+/*
+ * The default cross-fade is replaced with something quieter. A page that
+ * slides or scales reads as an app; this reads as a page turning.
+ *
+ * Deliberately outside the prefers-reduced-motion block below because that
+ * block only clamps `animation-duration` on elements -- view transitions are
+ * their own animation tree, so they are disabled explicitly.
+ */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    /*
+     * The header is sticky, so an anchored target would otherwise land
+     * underneath it. Keeps #main and any in-page link clear of the chrome.
+     */
+    scroll-padding-block-start: 4rem;
+  }
+
+  /*
+   * Typographic polish. All of this is free -- no JavaScript, no layout cost,
+   * and it is the difference between text that was set and text that was
+   * merely placed.
+   */
+  ::selection {
+    background-color: var(--color-accent);
+    color: var(--color-surface);
+  }
+
+  /* The scrollbar is page chrome too, and a default one undoes a warm page. */
+  html {
+    scrollbar-color: var(--color-ink-muted) var(--color-surface);
+  }
+
+  /* Form controls follow the brand rather than the operating system's blue. */
+  html {
+    accent-color: var(--color-accent);
+    caret-color: var(--color-accent);
+  }
+
+  /*
+   * `balance` evens the ragged edge of short headings; `pretty` only prevents
+   * orphans and is the right choice for long-form body copy, where `balance`
+   * would be both expensive and pointless.
+   */
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  p,
+  li {
+    text-wrap: pretty;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  body {
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: 1.6;
+    text-rendering: optimizeLegibility;
+  }
+
+  /*
+   * Motion is nearly absent, and that is a decision. Transitions are permitted
+   * on colour only -- never transforms, never opacity fades of content.
+   */
+  a,
+  button {
+    transition:
+      color 120ms linear,
+      border-color 120ms linear,
+      background-color 120ms linear;
+  }
+
+  /*
+   * A visible focus ring on every focusable element. Removing outlines without
+   * an equivalent replacement makes keyboard navigation impossible, so the
+   * default is strengthened here rather than reset away.
+   *
+   * The 2px radius is the ONLY radius in the entire system. A perfectly square
+   * ring reads as a rendering artefact rather than as focus.
+   */
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /*
+   * Skip link: off-screen until focused, then pinned to the top-left. Written
+   * as plain CSS rather than utilities because it must work before any
+   * JavaScript runs and is identical on every page.
+   */
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 100;
+    padding: 0.75rem 1rem;
+    background-color: var(--color-accent);
+    color: var(--color-surface);
+    font-family: var(--font-mono);
+    font-size: var(--text-kicker);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+  }
+
+  .skip-link:focus {
+    left: 0;
+  }
+
+  /*
+   * Images are block-level and fluid by default. Combined with the width and
+   * height attributes that <Image> always emits, this preserves the intrinsic
+   * aspect ratio and prevents layout shift as images load.
+   */
+  img,
+  picture,
+  svg,
+  video {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Figures are tabular data as often as not. Tabular numerals, always. */
+  time,
+  data {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/**
+ * The visual language.
+ *
+ * Every primitive here is pure CSS and costs no client JavaScript. See
+ * DESIGN.md for what each one is for and when NOT to reach for it.
+ */
+@layer components {
+  /*
+   * Mono kicker. Marks machine-adjacent information -- a label, a date, a
+   * version, a measurement. If the text is prose, it is sans.
+   */
+  .kicker {
+    font-family: var(--font-mono);
+    font-size: var(--text-kicker);
+    line-height: 1.2;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-ink-muted);
+  }
+
+  /*
+   * THE PANEL -- the signature component, and the only place
+   * --color-surface-raised appears.
+   *
+   * Border is full-strength ink; radius is zero; the shadow is a hard offset
+   * with no blur. Softening any of the three turns this back into a generic
+   * card, which is the specific thing the direction exists to avoid.
+   */
+  .panel {
+    border: 1px solid var(--color-line);
+    background-color: var(--color-surface-raised);
+    /*
+     * Colour is set explicitly, not inherited. A panel dropped onto a field
+     * would otherwise inherit cream field-ink onto its own light body and
+     * vanish. Panels carry their own palette wherever they land.
+     */
+    color: var(--color-ink);
+    border-radius: 0;
+  }
+
+  .panel-shadow {
+    box-shadow: 3px 3px 0 var(--color-ink);
+  }
+
+  .panel-title {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.125rem 0.375rem;
+    background-color: var(--color-chrome);
+    color: var(--color-chrome-ink);
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    line-height: 1.1;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .panel-body {
+    padding: 1rem;
+  }
+
+  /*
+   * The note pinned above the chat launcher. See WidgetCallout.astro.
+   *
+   * Sits clear of the launcher rather than overlapping it, and is narrow
+   * enough not to cover content on a phone. On very short viewports it is
+   * suppressed entirely: a fixed panel plus a launcher eats a landscape phone
+   * screen, and the launcher alone is the more important of the two.
+   */
+  .widget-callout {
+    position: fixed;
+    right: 1.5rem;
+    bottom: 5.5rem;
+    z-index: 50;
+    width: min(17rem, calc(100vw - 3rem));
+  }
+
+  /*
+   * WHERE THE CALLOUT DOES NOT APPEAR: PHONES.
+   *
+   * Its box is 272x150 and that is effectively fixed -- `min(17rem, ...)`
+   * resolves to 17rem on anything wider than a watch, so the panel does not
+   * shrink with the viewport, it just occupies more of it. On a 390px phone
+   * that is 70% of the width and 12% of the entire screen, sitting over the
+   * content: the topic filters on /writing/, the first card, the opening
+   * paragraph of an article.
+   *
+   * A note explaining a launcher is not worth a tenth of someone's screen. It
+   * is ornament, and ornament yields first.
+   *
+   * THE LAUNCHER ITSELF STAYS, which is what makes this safe rather than a
+   * removal: the chat is still one tap away on a phone, it just stops
+   * announcing itself. Nothing becomes unreachable -- the same test that makes
+   * hiding the header's social row honest (see DESIGN.md).
+   *
+   * 48rem is Tailwind's `md`, the same line the header's social row hides at.
+   * The short-viewport case below is the identical judgement on the other
+   * axis: a phone in landscape has no vertical room to give either.
+   */
+  @media (width < 48rem), (height <= 30rem) {
+    .widget-callout {
+      display: none;
+    }
+  }
+
+  /*
+   * Both buttons are colour-only on hover, per the motion rule. The dismiss
+   * control sits in the title bar and has to read against chrome, not surface.
+   */
+  .widget-callout .panel-title button {
+    cursor: pointer;
+    background: none;
+    border: 0;
+    padding: 0;
+    color: inherit;
+    font: inherit;
+    line-height: 1;
+    transition: color 120ms linear;
+  }
+
+  .widget-callout .panel-title button:hover {
+    color: var(--color-accent);
+  }
+
+  .widget-callout-open {
+    cursor: pointer;
+    background: none;
+    border: 0;
+    padding: 0;
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    transition: color 120ms linear;
+  }
+
+  .widget-callout-open:hover {
+    color: var(--color-accent-hover);
+  }
+
+  /* ---------------------------------------------------------------------
+   * THE CARD CATALOG
+   *
+   * Writing rendered as index cards you sift through. The filter is radio
+   * inputs plus `:has()` — no JavaScript, which is both the AGENTS.md rule
+   * and the reason it works on the first paint with nothing to hydrate.
+   *
+   * MOTION. DESIGN.md permits hover transitions on colour and border-colour
+   * only, and forbids transform theatrics. So the sift does not ease — it
+   * SNAPS. Cards sit at a slight angle in the resting pile and go square the
+   * instant a topic is chosen. That hard cut is more in keeping with a system
+   * built on square corners and hard shadows than any amount of gliding, and
+   * it makes the act of filtering feel like squaring a stack of paper on a
+   * desk rather than like a UI animating.
+   *
+   * The rotation is static state, not a transition, so `prefers-reduced-
+   * motion` has nothing to suppress: nothing ever moves on its own.
+   * ------------------------------------------------------------------- */
+
+  .catalog-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    border: 0;
+    padding: 0;
+    margin: 0 0 2rem;
+  }
+
+  /*
+   * The legend inherits the ambient text colour rather than taking `.kicker`'s
+   * muted ink. This component sits both on a cream page and on a dithered
+   * field, and `--color-ink-muted` is illegible on the field — `field-ink` is
+   * the only text colour permitted there. Inheriting is what lets one
+   * component be correct in both places instead of needing a variant.
+   */
+  .catalog-controls > legend {
+    color: inherit;
+  }
+
+  /*
+   * Drawer labels. Square, ink-bordered, mono micro — the same vocabulary as
+   * a panel title bar, because that is what a catalog drawer label is.
+   */
+  .catalog-tab {
+    cursor: pointer;
+    border: 1px solid var(--color-line);
+    padding: 0.1875rem 0.5rem;
+    background-color: transparent;
+    color: inherit;
+    font-family: var(--font-mono);
+    font-size: var(--text-micro);
+    line-height: 1.1;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    /* Colour only, per the motion rule. */
+    transition:
+      color 120ms linear,
+      background-color 120ms linear,
+      border-color 120ms linear;
+  }
+
+  .catalog-tab .catalog-count {
+    opacity: 0.6;
+    margin-inline-start: 0.375rem;
+  }
+
+  /* The pulled drawer: inverted, the way a selected tab reads on paper. */
+  .catalog-radio:checked + .catalog-tab {
+    background-color: var(--color-chrome);
+    color: var(--color-chrome-ink);
+    border-color: var(--color-chrome);
+  }
+
+  /*
+   * The radios are visually hidden but remain focusable, so the focus ring has
+   * to be drawn on the label instead. Without this the control is invisible to
+   * keyboard users — the single most common way a CSS-only filter is broken.
+   */
+  .catalog-radio:focus-visible + .catalog-tab {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  .catalog-stack {
+    display: grid;
+    gap: 1.5rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  @media (width >= 48rem) {
+    .catalog-stack {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  /*
+   * The resting pile. Alternating angles and a slight vertical drift read as
+   * cards dropped on a desk rather than laid out on a grid. Deliberately small:
+   * past about 2deg it stops looking like paper and starts looking like a bug.
+   */
+  .catalog-card {
+    rotate: -0.8deg;
+    /* The containing block for the stretched link below. */
+    position: relative;
+  }
+
+  /*
+   * THE WHOLE CARD IS THE TARGET. The title anchor throws a transparent
+   * pseudo-element over the entire card, so the number, the date, the
+   * description and the margins all lead to the article — which is what a card
+   * that looks like one object is read as.
+   *
+   * Deliberately the anchor and not a wrapping link: the <a> stays inside the
+   * heading, so the outline, the accessible name and the keyboard target are
+   * still the title alone. Nothing about the markup changes; the hit area grows.
+   *
+   * The cost is that the card's body text can no longer be selected by dragging
+   * over it. That is the accepted trade for a card-sized target — the
+   * description is a two-line summary that is repeated in full on the article
+   * page.
+   */
+  .catalog-link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+
+  .catalog-card:nth-child(2n) {
+    rotate: 1.1deg;
+    margin-block-start: 0.75rem;
+  }
+
+  .catalog-card:nth-child(3n) {
+    rotate: -1.5deg;
+  }
+
+  .catalog-card:nth-child(4n) {
+    rotate: 0.6deg;
+    margin-block-start: 0.375rem;
+  }
+
+  /*
+   * Lifting one out of the pile. Ink border at full strength plus a deeper
+   * offset shadow — no transform, so nothing slides. `position: relative` and
+   * z-index bring it over its neighbours when the angles cause an overlap.
+   */
+  .catalog-card:hover,
+  .catalog-card:focus-within {
+    z-index: 1;
+  }
+
+  .catalog-card:hover .panel,
+  .catalog-card:focus-within .panel {
+    border-color: var(--color-accent);
+  }
+
+  .catalog-card:hover .panel-shadow,
+  .catalog-card:focus-within .panel-shadow {
+    box-shadow: 5px 5px 0 var(--color-accent);
+  }
+
+  /*
+   * THE SIFT. Choosing any topic other than "everything" squares the stack:
+   * angles to zero, drift removed. The per-topic `display: none` rules are
+   * generated in CardCatalog.astro, one line per topic, because CSS cannot
+   * compare a checked input's value against an element's attribute.
+   */
+  .catalog:not(:has(.catalog-radio[value='everything']:checked)) .catalog-card {
+    rotate: 0deg;
+    margin-block-start: 0;
+  }
+
+  /*
+   * Full-bleed dithered field. One, at most two per page, and only on pages in
+   * the display register. The dither sits in a pseudo-element above the solid
+   * field so the texture darkens it without a second background layer.
+   */
+  .field {
+    position: relative;
+    background-color: var(--color-field);
+    color: var(--color-field-ink);
+    isolation: isolate;
+    /*
+     * Clips the watermark. The bean is deliberately larger than the band and
+     * hangs off the right edge -- without this it widens the document and the
+     * whole page scrolls sideways on a phone. Cropping it was always the
+     * intent; this is what makes the crop real rather than an overflow.
+     */
+    overflow: hidden;
+  }
+
+  .field::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-color: var(--color-ink);
+    opacity: 0.22;
+    -webkit-mask-image: var(--dither-cell);
+    mask-image: var(--dither-cell);
+    -webkit-mask-size: 8px 8px;
+    mask-size: 8px 8px;
+    -webkit-mask-repeat: repeat;
+    mask-repeat: repeat;
+  }
+
+  /*
+   * Leader line: the dotted rule that connects a label to its value, as in a
+   * table of contents. Rendered as an explicit aria-hidden span inside a flex
+   * row rather than a pseudo-element, because the filler has to sit BETWEEN two
+   * siblings and no pseudo-element can.
+   */
+  .leader-fill {
+    flex: 1 1 auto;
+    align-self: center;
+    margin-inline: 0.5rem;
+    border-bottom: 1px dotted var(--color-ink-muted);
+  }
+
+  /*
+   * THE BEAN.
+   *
+   * The pixel data lives in the generated bean.css as a single --bean-shadow
+   * custom property. The element painting it is always exactly 1x1: scaling is
+   * done with transform, so every pixel stays square at every size instead of
+   * being resampled into mush.
+   *
+   * Because a transform does not affect layout, the wrapper carries the real
+   * dimensions -- otherwise the bean would paint over whatever follows it.
+   *
+   * Sizes are classes rather than an inline custom property. AGENTS.md allows
+   * inline styles only where unavoidable, and four named sizes cover every use
+   * on the site.
+   */
+  .bean {
+    --bean-scale: 1;
+    /*
+     * The pixel list is painted with `currentColor` (see the long note in
+     * scripts/generate-bean.mjs), so `color` is what tints the bean. That is
+     * also why the roast animation below can be a plain colour transition.
+     */
+    color: var(--color-accent);
+    display: inline-block;
+    width: calc(var(--bean-w) * var(--bean-scale) * 1px);
+    height: calc(var(--bean-h) * var(--bean-scale) * 1px);
+    line-height: 0;
+    flex: none;
+  }
+
+  .bean > i {
+    display: block;
+    width: 1px;
+    height: 1px;
+    transform: scale(var(--bean-scale));
+    transform-origin: 0 0;
+    box-shadow: var(--bean-shadow);
+  }
+
+  .bean--sm {
+    --bean-scale: 1;
+  }
+
+  .bean--md {
+    --bean-scale: 2;
+  }
+
+  .bean--lg {
+    --bean-scale: 6;
+  }
+
+  .bean--xl {
+    --bean-scale: 10;
+  }
+
+  /*
+   * Section mark: a bean centred on a hairline, replacing a plain <hr>. The
+   * rule is drawn by the pseudo-elements so the bean sits in a gap rather than
+   * on top of a continuous line.
+   */
+}
+
+/**
+ * SCROLL-DRIVEN ANIMATION.
+ *
+ * `animation-timeline` ties an animation's progress to scroll position instead
+ * of to time. It runs on the compositor thread, needs no scroll listener, and
+ * costs nothing against the hydration budget -- this is motion the site could
+ * not previously afford at all.
+ *
+ * Wrapped in @supports on purpose. Without the guard, a browser that ignores
+ * `animation-timeline` would run these as ordinary time-based animations and
+ * play every one of them instantly on load, which is worse than no animation.
+ * Inside the guard, unsupported browsers simply get the static page.
+ *
+ * `animation-range` is expressed in `cover` units: 0% is the element first
+ * touching the viewport, 100% is it fully leaving.
+ */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    /*
+     * Panels settle as they arrive. A few pixels of travel and nothing else --
+     * the point is that the window stack feels assembled rather than painted.
+     */
+    .panel {
+      animation: panel-settle linear both;
+      animation-timeline: view();
+      animation-range: entry 10% entry 60%;
+    }
+
+    @keyframes panel-settle {
+      from {
+        opacity: 0;
+        translate: 0 12px;
+      }
+      to {
+        opacity: 1;
+        translate: 0 0;
+      }
+    }
+
+    /*
+     * THE ROASTING BEAN. The scroll timeline drives it from raw to dark roast
+     * as it crosses the viewport.
+     *
+     * This started out animating a registered `@property --roast` of type
+     * <color>. That was removed: `color` already interpolates natively, so the
+     * custom property bought nothing but a layer of indirection and a feature
+     * to explain. The rule is that the bean is painted in `currentColor`, and
+     * everything else follows from it.
+     */
+    .bean--roasting {
+      animation: roast linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 70%;
+    }
+
+    @keyframes roast {
+      from {
+        color: oklch(0.66 0.08 100);
+      }
+      to {
+        color: oklch(0.32 0.045 55);
+      }
+    }
+  }
+}
+
+/*
+ * Without scroll-timeline support the roasting bean would sit at the initial
+ * value of --roast, which is the raw, unroasted colour and reads as a mistake.
+ * Pin it to the finished roast instead, so the fallback is a normal bean.
+ */
+@supports not (animation-timeline: view()) {
+  .bean--roasting {
+    color: var(--color-accent);
+  }
+}
+
+/**
+ * THE BREW COLUMN -- a pour-over in three acts.
+ *
+ * ONE SET OF KEYFRAMES, TWO WAYS TO DRIVE IT. Every stage boundary lives
+ * inside the keyframes as a percentage of the whole cycle, not in
+ * `animation-range`. That is what lets the same choreography be driven either
+ * by scroll position (an article) or by a duration (the homepage loop) with
+ * nothing restated -- the mode only decides where the timeline comes from.
+ *
+ * The cycle, as percentages:
+ *
+ *   ACT ONE -- GRIND            (no cup: nothing has been brewed yet)
+ *     0-20%    the bean falls into the grinder, rotating as it goes
+ *     22-50%   grounds gather in the dripper
+ *     42-52%   the grinder leaves
+ *
+ *   ACT TWO -- BREW             (no grinder: the grinding is done)
+ *     46-56%   the cup arrives
+ *     52-88%   drips fall
+ *     52-90%   the cup fills -- OVERLAPPING THE DRIPS on purpose, so the level
+ *              rises with them rather than on its own schedule
+ *
+ *   ACT THREE -- REST           (no dripper: the brewing is done)
+ *     86-94%   the dripper leaves
+ *     90-100%  the full cup steams
+ *
+ * The footprint never changes: parts fade rather than collapse, because a
+ * sticky element that reflows mid-scroll jitters under the reader.
+ *
+ * Sprites follow the same pattern as the bean -- a 1x1 element painted by
+ * box-shadow and grown with transform, inside a wrapper carrying the real
+ * dimensions. See the note in scripts/generate-bean.mjs.
+ */
+.brew {
+  --brew-scale: 4;
+  --brew-cycle: 18s;
+  display: none;
+  position: relative;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--brew-scale) * 2px);
+  color: var(--color-accent);
+  /*
+   * Reserves the height the bean falls through. The fall is a transform, which
+   * does not affect layout, so without this the bean starts above the column's
+   * box and lands on top of whatever is in the rail above it.
+   */
+  padding-block-start: calc(var(--brew-scale) * 11px);
+}
+
+.brew-part,
+.brew-bean {
+  position: relative;
+  display: block;
+  line-height: 0;
+}
+
+.brew-part > i,
+.brew-bean > i,
+.brew-grounds > i {
+  display: block;
+  width: 1px;
+  height: 1px;
+  transform: scale(var(--brew-scale));
+  transform-origin: 0 0;
+}
+
+.brew-bean {
+  width: calc(var(--bean-roll-w) * var(--brew-scale) * 1px);
+  height: calc(var(--bean-roll-h) * var(--brew-scale) * 1px);
+}
+
+.brew-bean > i {
+  box-shadow: var(--bean-roll-0);
+}
+
+.brew-grinder {
+  width: calc(var(--sprite-grinder-w) * var(--brew-scale) * 1px);
+  height: calc(var(--sprite-grinder-h) * var(--brew-scale) * 1px);
+}
+
+.brew-grinder > i {
+  box-shadow: var(--sprite-grinder);
+}
+
+.brew-dripper {
+  width: calc(var(--sprite-dripper-w) * var(--brew-scale) * 1px);
+  height: calc(var(--sprite-dripper-h) * var(--brew-scale) * 1px);
+}
+
+.brew-dripper > i {
+  box-shadow: var(--sprite-dripper);
+}
+
+/*
+ * The grounds sit inside the cone. Positioned from the dripper's own top-left
+ * in sprite units, so the placement survives any change of --brew-scale.
+ */
+.brew-grounds {
+  position: absolute;
+  inset-block-start: calc(var(--brew-scale) * 3px);
+  inset-inline-start: calc(var(--brew-scale) * 6.5px);
+  width: calc(var(--sprite-grounds-w) * var(--brew-scale) * 1px);
+  height: calc(var(--sprite-grounds-h) * var(--brew-scale) * 1px);
+  clip-path: inset(100% 0 0 0);
+}
+
+.brew-grounds > i {
+  box-shadow: var(--sprite-grounds);
+}
+
+/* Wrapper windows the act; the inner element does the falling. */
+.brew-drip {
+  display: block;
+  width: calc(var(--brew-scale) * 1px);
+  height: calc(var(--brew-scale) * 3px);
+  opacity: 0;
+}
+
+.brew-drip > i {
+  display: block;
+  width: 100%;
+  height: calc(var(--brew-scale) * 2px);
+  background: currentColor;
+}
+
+.brew-mug {
+  width: calc(var(--sprite-mug-w) * var(--brew-scale) * 1px);
+  height: calc(var(--sprite-mug-h) * var(--brew-scale) * 1px);
+  /* Absent during the grind; faded in when the brew starts. */
+  opacity: 0;
+}
+
+.brew-mug > i {
+  box-shadow: var(--sprite-mug);
+  position: relative;
+  z-index: 1;
+}
+
+/*
+ * The coffee, behind the mug's outline so the rim and handle stay crisp. Inset
+ * in sprite units to sit exactly inside the mug walls.
+ */
+.brew-coffee {
+  position: absolute;
+  inset-inline-start: calc(var(--brew-scale) * 1px);
+  inset-block-end: calc(var(--brew-scale) * 2px);
+  width: calc(var(--brew-scale) * 13px);
+  /*
+   * Full height, scaled from the base -- NOT an animated `height`. Height is a
+   * layout property, so animating it re-lays-out the column on every frame.
+   * That is tolerable for a scroll-driven animation that only runs while you
+   * scroll; it is not for the homepage loop, which runs forever. `scale` stays
+   * on the compositor.
+   */
+  height: calc(var(--brew-scale) * 7px);
+  background: currentColor;
+  transform-origin: 50% 100%;
+  scale: 1 0;
+}
+
+/*
+ * Steam. Three wisps above the mug, rising on staggered loops -- it only reads
+ * as steam because they are out of phase with each other. It sits in the space
+ * the dripper vacates, which is why the dripper has to leave first.
+ */
+.brew-steam {
+  position: absolute;
+  inset-block-end: calc(var(--sprite-mug-h) * var(--brew-scale) * 1px);
+  inset-inline-start: 50%;
+  display: flex;
+  gap: calc(var(--brew-scale) * 2px);
+  height: calc(var(--brew-scale) * 6px);
+  translate: -50% 0;
+  opacity: 0;
+}
+
+.brew-steam > i {
+  display: block;
+  width: calc(var(--brew-scale) * 1px);
+  height: calc(var(--brew-scale) * 2px);
+  background: currentColor;
+  opacity: 0;
+}
+
+/* Each stage animation is named on its own element; the mode supplies time. */
+.brew-bean {
+  animation-name: brew-bean-fall;
+}
+.brew-grinder {
+  animation-name: brew-fade-out;
+}
+.brew-grounds {
+  animation-name: brew-grounds-fill;
+}
+.brew-dripper {
+  animation-name: brew-dripper-out;
+}
+.brew-mug {
+  animation-name: brew-mug-in;
+}
+.brew-coffee {
+  animation-name: brew-fill;
+}
+.brew-drip {
+  animation-name: brew-drip-window;
+}
+.brew-steam {
+  animation-name: brew-steam-window;
+}
+
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .brew {
+      display: flex;
+    }
+
+    .brew-stage {
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+    }
+
+    /*
+     * SCROLL MODE. The range is the whole timeline because the stages are
+     * already positioned inside the keyframes.
+     */
+    .brew:not(.brew--loop) .brew-stage {
+      animation-timeline: scroll(root block);
+      animation-range: 0% 100%;
+    }
+
+    /* LOOP MODE. Same keyframes, driven by a clock instead. */
+    .brew--loop .brew-stage {
+      animation-duration: var(--brew-cycle);
+      animation-iteration-count: infinite;
+    }
+
+    /*
+     * The fast sub-loops are timed in BOTH modes, deliberately. A drip should
+     * fall at a drip's rate and steam should rise at steam's rate -- neither is
+     * a function of how fast someone scrolls. Their wrappers window them to the
+     * right act, so nothing shows outside its stage.
+     */
+    .brew-bean > i {
+      animation: bean-roll 0.5s steps(1) infinite;
+    }
+
+    .brew-drip > i {
+      animation: brew-drip-fall 1.1s linear infinite;
+    }
+
+    .brew-steam > i {
+      animation: brew-steam-rise 2.4s ease-out infinite;
+    }
+
+    .brew-steam > i:nth-child(2) {
+      animation-delay: 0.8s;
+    }
+
+    .brew-steam > i:nth-child(3) {
+      animation-delay: 1.6s;
+    }
+  }
+}
+
+/* ---- The cycle. Percentages are of the whole sequence. ------------------ */
+
+@keyframes brew-bean-fall {
+  0% {
+    translate: 0 calc(var(--brew-scale) * -10px);
+    opacity: 1;
+  }
+  16% {
+    opacity: 1;
+  }
+  20% {
+    translate: 0 calc(var(--brew-scale) * 4px);
+    opacity: 0;
+  }
+  100% {
+    translate: 0 calc(var(--brew-scale) * 4px);
+    opacity: 0;
+  }
+}
+
+@keyframes brew-grounds-fill {
+  0%,
+  22% {
+    clip-path: inset(100% 0 0 0);
+  }
+  50%,
+  100% {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes brew-fade-out {
+  0%,
+  42% {
+    opacity: 1;
+  }
+  52%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes brew-dripper-out {
+  0%,
+  86% {
+    opacity: 1;
+  }
+  94%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes brew-mug-in {
+  0%,
+  46% {
+    opacity: 0;
+  }
+  56%,
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes brew-fill {
+  0%,
+  52% {
+    scale: 1 0;
+  }
+  90%,
+  100% {
+    scale: 1 1;
+  }
+}
+
+@keyframes brew-drip-window {
+  0%,
+  52% {
+    opacity: 0;
+  }
+  56%,
+  84% {
+    opacity: 1;
+  }
+  88%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes brew-steam-window {
+  0%,
+  90% {
+    opacity: 0;
+  }
+  96%,
+  100% {
+    opacity: 1;
+  }
+}
+
+/* ---- The fast sub-loops ------------------------------------------------- */
+
+@keyframes brew-drip-fall {
+  0% {
+    opacity: 0;
+    translate: 0 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    translate: 0 calc(var(--brew-scale) * 4px);
+  }
+}
+
+@keyframes brew-steam-rise {
+  0% {
+    opacity: 0;
+    translate: 0 0;
+  }
+  30% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    translate: 0 calc(var(--brew-scale) * -5px);
+  }
+}
+
+/**
+ * THE WATERMARK -- an enormous bean sitting inside the field.
+ *
+ * Deliberately cropped by the field's edges. A mascot that always appears
+ * whole and centred reads as a logo; one that runs off the edge reads like
+ * something printed on the page, and it gives the band a focal point that the
+ * panels can overlap.
+ *
+ * It parallaxes: the field scrolls at page speed, the bean inside it at a
+ * fraction of that, which is the entire trick and again costs no JavaScript.
+ */
+.bean-watermark {
+  /*
+   * Scaled to the viewport. At 26 the bean is 390px, which is the entire width
+   * of a phone -- it would stop reading as a watermark and start reading as a
+   * background.
+   */
+  --watermark-scale: 12;
+  position: absolute;
+  inset-block-start: 50%;
+  /*
+   * The wrapper MUST carry the real dimensions. The element painting the bean
+   * is 1x1 and grown by a transform, and a transform does not affect layout --
+   * so without these the box is effectively zero-width, `inset-inline-end`
+   * anchors that nothing against the edge, and all 390px of pixels render off
+   * the right of the screen. Exactly the same reason `.bean` has a wrapper.
+   */
+  width: calc(var(--bean-w) * var(--watermark-scale) * 1px);
+  height: calc(var(--bean-h) * var(--watermark-scale) * 1px);
+  inset-inline-end: -6%;
+  z-index: 0;
+  color: var(--color-field-ink);
+  opacity: 0.2;
+  pointer-events: none;
+  translate: 0 -50%;
+}
+
+@media (min-width: 48rem) {
+  .bean-watermark {
+    --watermark-scale: 20;
+  }
+}
+
+@media (min-width: 64rem) {
+  .bean-watermark {
+    --watermark-scale: 26;
+  }
+}
+
+.bean-watermark > i {
+  display: block;
+  width: 1px;
+  height: 1px;
+  transform: scale(var(--watermark-scale));
+  transform-origin: 0 0;
+  box-shadow: var(--bean-shadow);
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .bean-watermark {
+      animation: watermark-drift linear both;
+      animation-timeline: view();
+      animation-range: cover 0% cover 100%;
+    }
+
+    @keyframes watermark-drift {
+      from {
+        translate: 0 -20%;
+      }
+      to {
+        translate: 0 -80%;
+      }
+    }
+  }
+}
+
+/**
+ * The 404's bean turns on its own. This is the one timed animation on the
+ * site, and it is confined to the one page with nothing else to do -- a page
+ * nobody wants to be on is the right place to put something to look at.
+ */
+.bean--spin {
+  /* The roll frames live on their own, slightly larger square grid. */
+  width: calc(var(--bean-roll-w) * var(--bean-scale) * 1px);
+  height: calc(var(--bean-roll-h) * var(--bean-scale) * 1px);
+}
+
+.bean--spin > i {
+  box-shadow: var(--bean-roll-0);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .bean--spin > i {
+    animation: bean-roll 1.6s steps(1) infinite;
+  }
+}
+
+/**
+ * Rendered Markdown -- the reading register.
+ *
+ * Tailwind's preflight strips heading and list styling, so rendered content
+ * needs styles restored. Done as one `.prose` block rather than the typography
+ * plugin: the plugin is a large dependency for a personal site, and its output
+ * is harder to reason about than sixty lines of CSS.
+ *
+ * This is the QUIET half of the system. It inherits the ink hairlines, the mono
+ * metadata and the square code blocks, and nothing else: display type and
+ * panels have no business in the middle of an article someone is reading.
+ *
+ * Applies only to <Content /> output, never to page chrome.
+ */
+@layer components {
+  .prose {
+    max-width: var(--container-content);
+  }
+
+  .prose > * + * {
+    margin-block-start: 1.25em;
+  }
+
+  .prose h2,
+  .prose h3,
+  .prose h4 {
+    color: var(--color-ink);
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    margin-block-start: 2em;
+    margin-block-end: 0.75em;
+  }
+
+  .prose h2 {
+    font-size: var(--text-heading);
+  }
+
+  .prose h3 {
+    font-size: 1.25rem;
+  }
+
+  .prose h4 {
+    font-size: 1.0625rem;
+  }
+
+  .prose a {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .prose a:hover {
+    color: var(--color-accent-hover);
+  }
+
+  .prose ul,
+  .prose ol {
+    padding-inline-start: 1.5rem;
+  }
+
+  .prose ul {
+    list-style: disc;
+  }
+
+  .prose ol {
+    list-style: decimal;
+  }
+
+  .prose li + li {
+    margin-block-start: 0.375em;
+  }
+
+  /*
+   * The soft rule, not the ink hairline. A full-contrast bar down the side of a
+   * pull quote fights the paragraph it is quoting.
+   */
+  .prose blockquote {
+    border-inline-start: 3px solid var(--color-rule);
+    padding-inline-start: 1rem;
+    color: var(--color-ink-muted);
+  }
+
+  .prose code {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+  }
+
+  .prose :not(pre) > code {
+    background-color: var(--color-surface-raised);
+    border: 1px solid var(--color-rule);
+    border-radius: 0;
+    padding: 0.0625em 0.25em;
+  }
+
+  .prose pre {
+    border: 1px solid var(--color-line);
+    border-radius: 0;
+    overflow-x: auto;
+    padding: 1rem;
+  }
+
+  .prose hr {
+    border: 0;
+    border-block-start: 1px solid var(--color-rule);
+  }
+
+  .prose table {
+    display: block;
+    overflow-x: auto;
+    border-collapse: collapse;
+    width: 100%;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .prose th,
+  .prose td {
+    border: 1px solid var(--color-line);
+    padding: 0.5rem 0.75rem;
+    text-align: start;
+  }
+
+  .prose th {
+    font-family: var(--font-mono);
+    font-size: var(--text-kicker);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+}

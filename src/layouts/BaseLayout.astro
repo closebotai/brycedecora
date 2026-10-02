@@ -1,0 +1,311 @@
+---
+/**
+ * The only layout that renders <html>. Every public page goes through it,
+ * directly or via a more specific layout.
+ *
+ * It is the enforcement point for the SEO contract:
+ *
+ *   - `seo` is a REQUIRED prop, parsed through `seoInputSchema`. A page with
+ *     no SEO object, a placeholder title, or a missing description fails
+ *     `astro build` rather than shipping.
+ *   - The canonical URL, Open Graph set, and robots directives are computed
+ *     here from `Astro.site` + the current route. Pages never write them, so
+ *     they cannot be forgotten or hard-coded to the wrong domain.
+ *   - Person, WebSite, and WebPage JSON-LD are always emitted. Templates add
+ *     only nodes describing their own content.
+ *   - Exactly one <main> exists, and it is here.
+ */
+import '../styles/global.css';
+
+import { Font } from 'astro:assets';
+// Build-time, public, and optional. See the note on `env` in astro.config.ts.
+import { CLOSEBOT_SOURCE } from 'astro:env/client';
+
+import SEO from '../components/seo/SEO.astro';
+import Breadcrumbs from '../components/common/Breadcrumbs.astro';
+import Header from '../components/navigation/Header.astro';
+import Footer from '../components/navigation/Footer.astro';
+import WidgetCallout from '../components/ui/WidgetCallout.astro';
+import { DEFAULT_LANG, SITE_NAME } from '../data/site';
+import { resolveSeo } from '../schemas/seo';
+import { deriveBreadcrumbs } from '../utils/urls';
+import {
+  buildBreadcrumbList,
+  buildPerson,
+  buildWebPage,
+  buildWebSite,
+  type BreadcrumbItem,
+  type JsonLdNode,
+} from '../utils/schema';
+import type { BaseLayoutProps } from './types';
+
+/** See src/layouts/types.ts -- shared so specific layouts can extend them. */
+type Props = BaseLayoutProps;
+
+const {
+  seo: seoInput,
+  pageType,
+  breadcrumbs,
+  breadcrumbLabel,
+  schema,
+  datePublished,
+  dateModified,
+  width = 'content',
+} = Astro.props;
+
+// Narrow Astro.site for the rest of the file. resolveSeo checks this too, but
+// TypeScript cannot see through that call.
+if (!Astro.site) {
+  throw new Error(
+    'Astro.site is undefined. Set `site` in astro.config.ts -- canonical URLs, Open Graph URLs, and JSON-LD @ids all derive from it.',
+  );
+}
+const site = Astro.site;
+
+const seo = resolveSeo(seoInput, { site, pathname: Astro.url.pathname });
+
+// One breadcrumb array drives both the visible trail and the BreadcrumbList
+// node, so the structured data always describes something on the page.
+let crumbs: BreadcrumbItem[] = [];
+if (breadcrumbs !== false) {
+  crumbs = breadcrumbs ?? deriveBreadcrumbs(Astro.url.pathname, site);
+  const last = crumbs.at(-1);
+  if (breadcrumbLabel && last) {
+    crumbs = [...crumbs.slice(0, -1), { ...last, name: breadcrumbLabel }];
+  }
+}
+// A one-item trail carries no information; don't render or describe it.
+const hasBreadcrumb = crumbs.length > 1;
+
+// JSON-LD @ids hang off the page's own URL, which exists even when no
+// canonical tag is emitted (the 404 page).
+const nodes: JsonLdNode[] = [
+  buildPerson(site),
+  buildWebSite(site),
+  buildWebPage({
+    site,
+    canonical: seo.url,
+    title: seo.title,
+    description: seo.description,
+    type: pageType,
+    hasBreadcrumb,
+    datePublished,
+    dateModified,
+  }),
+  ...(hasBreadcrumb ? [buildBreadcrumbList(seo.url, crumbs)] : []),
+  ...(schema?.({ site, canonical: seo.url }) ?? []),
+];
+
+/*
+ * 'full' drops both the measure and the gutter so a full-bleed field can reach
+ * the viewport edges. Pages that ask for it restore the measure themselves --
+ * see PanelField.astro and PageLayout.astro.
+ */
+const measure =
+  width === 'full'
+    ? 'w-full'
+    : `mx-auto w-full px-gutter py-12 ${width === 'wide' ? 'max-w-wide' : 'max-w-content'}`;
+---
+
+<!doctype html>
+<html lang={DEFAULT_LANG}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+
+    {/*
+      Feed autodiscovery. Readers and aggregators look for exactly this link
+      rather than guessing /rss.xml, so without it the feed effectively does
+      not exist to anything automated.
+    */}
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title={`${SITE_NAME} — Writing`}
+      href="/rss.xml"
+    />
+
+    {/*
+      Sans is preloaded because it sets the LCP text on every page. Mono is not:
+      it only sets small labels, so a brief swap there is invisible and the
+      bytes stay off the critical path. Both emit <style>/<link>, never
+      <script> -- the hydration budget is untouched.
+    */}
+    <Font cssVariable="--font-plex-sans" preload />
+    <Font cssVariable="--font-plex-mono" />
+
+    <SEO seo={seo} schema={nodes} />
+
+    {/*
+      THEME BOOTSTRAP. `is:inline` is required, not stylistic: a bundled script
+      is deferred, and a deferred theme switch means every navigation paints the
+      wrong palette first. This has to run before the body renders.
+
+      It is also the only script on most pages, and it does two jobs so that it
+      stays one script tag: apply the stored theme now, and wire the toggle up
+      once the DOM exists.
+
+      Without JavaScript none of this runs, no `data-theme` is ever set, and the
+      `prefers-color-scheme` rules in global.css still give a correct dark
+      theme. The toggle simply stays hidden. See ThemeToggle.astro.
+    */}
+    <script is:inline>
+      (() => {
+        const KEY = 'theme';
+
+        const stored = (() => {
+          try {
+            return localStorage.getItem(KEY);
+          } catch {
+            // Private mode, or storage disabled. Fall back to the system.
+            return null;
+          }
+        })();
+
+        if (stored === 'light' || stored === 'dark') {
+          document.documentElement.dataset.theme = stored;
+        }
+
+        const resolved = () =>
+          document.documentElement.dataset.theme ??
+          (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+
+        document.addEventListener('DOMContentLoaded', () => {
+          const button = document.getElementById('theme-toggle');
+          const label = button?.querySelector('[data-theme-label]');
+          if (!button || !label) return;
+
+          const paint = () => {
+            // The label names the theme the button switches TO.
+            const next = resolved() === 'dark' ? 'light' : 'dark';
+            label.textContent = next;
+            button.setAttribute('aria-label', `Switch to ${next} theme`);
+          };
+
+          button.hidden = false;
+          paint();
+
+          button.addEventListener('click', () => {
+            const next = resolved() === 'dark' ? 'light' : 'dark';
+            document.documentElement.dataset.theme = next;
+            try {
+              localStorage.setItem(KEY, next);
+            } catch {
+              // Not persisting is survivable; the toggle still works this visit.
+            }
+            paint();
+          });
+        });
+
+        /*
+         * ACCESSIBILITY PATCH FOR THE CLOSEBOT WIDGET.
+         *
+         * The widget injects `button.cb-send` with no accessible name, which
+         * Lighthouse flags as `button-name` and which costs seven points of the
+         * accessibility score -- enough to drop the site under the 0.95 floor in
+         * lighthouserc.json. Our own markup scores 100.
+         *
+         * THE REAL FIX IS AN aria-label IN cb.js, at source, where it would fix
+         * every site embedding the widget rather than only this one. This is a
+         * stopgap and should be deleted once that ships.
+         *
+         * It is bolted onto the theme bootstrap deliberately: a separate file
+         * would be a fourth script, and a workaround does not deserve a slot in
+         * the budget of its own.
+         *
+         * The observer disconnects as soon as it succeeds. It cannot run open-
+         * ended: `subtree: true` on <body> fires on every DOM change anywhere
+         * on the page, including every mutation the widget itself makes while
+         * someone is typing in it.
+         *
+         * tests/e2e/no-js.spec.ts asserts the button ends up named, so if the
+         * widget renames the class this fails loudly instead of silently.
+         */
+        const nameSendButton = () => {
+          const send = document.querySelector('.cb-send');
+          if (!send) return false;
+          if (!send.getAttribute('aria-label') && !send.textContent?.trim()) {
+            send.setAttribute('aria-label', 'Send message');
+          }
+          return true;
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+          if (nameSendButton()) return;
+
+          const observer = new MutationObserver(() => {
+            if (nameSendButton()) observer.disconnect();
+          });
+          observer.observe(document.body, { childList: true, subtree: true });
+
+          // The widget loads in well under this. Never observe indefinitely.
+          setTimeout(() => observer.disconnect(), 20000);
+        });
+      })();
+    </script>
+
+    {/*
+      CloseBot chat widget.
+
+      The one third-party script on the site, and a deliberate exception to the
+      "avoid third-party scripts" rule in AGENTS.md -- it is the owner's own
+      product, which is a different trade from an analytics tag.
+
+      `async` so it never blocks parsing or rendering, and `is:inline` so Astro
+      leaves the external src alone rather than trying to bundle it.
+
+      Nothing on the site depends on it. It has no .cb-widget-container to bind
+      to, so it mounts its own floating widget; if it fails to load, no content
+      and no navigation is affected.
+
+      RENDERED ONLY WHEN AN ACCOUNT IS CONFIGURED. `CLOSEBOT_SOURCE` is a build
+      variable, not a hard-coded id -- see the long note in astro.config.ts for
+      why. No value means no widget, which is what keeps a fork from silently
+      loading someone else's agent. The script budget in AGENTS.md is therefore
+      three WHEN CONFIGURED and two without, and tests/e2e/no-js.spec.ts
+      asserts whichever applies rather than a fixed number.
+    */}
+    {
+      CLOSEBOT_SOURCE && (
+        <script
+          is:inline
+          src={`https://api.closebot.com/scripts/cb.js?source=${CLOSEBOT_SOURCE}`}
+          async
+        />
+      )
+    }
+
+    {/* Escape hatch for genuinely page-specific head content. Never metadata. */}
+    <slot name="head" />
+  </head>
+
+  <body class="flex min-h-screen flex-col">
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <Header />
+
+    <main id="main" class={`flex-1 ${measure}`}>
+      {
+        /*
+         * In 'full' the main element has no gutter, so the trail has to carry
+         * its own or it sits flush against the viewport edge.
+         */
+        hasBreadcrumb &&
+          (width === 'full' ? (
+            <div class="mx-auto w-full max-w-wide px-gutter pt-8">
+              <Breadcrumbs items={crumbs} />
+            </div>
+          ) : (
+            <Breadcrumbs items={crumbs} />
+          ))
+      }
+      <slot />
+    </main>
+
+    <Footer />
+
+    <WidgetCallout />
+  </body>
+</html>

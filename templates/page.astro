@@ -1,0 +1,71 @@
+---
+/**
+ * STANDALONE PAGE TEMPLATE
+ *
+ * Copy to src/pages/<name>.astro → /<name>/ and delete these comments.
+ * For anything that is a piece of writing, use templates/article.md instead —
+ * content belongs in a collection, not in a page component.
+ *
+ * Use this for pages that are structural rather than editorial: about,
+ * contact, services, a landing page.
+ *
+ *
+ * THE SEO OBJECT IS REQUIRED AND VALIDATED. The build fails on a placeholder.
+ *
+ *   title        10–60 chars
+ *   description  50–160 chars, a standalone answer rather than a teaser
+ *
+ * Everything else — canonical, Open Graph, Twitter card, robots, the
+ * Person/WebSite/WebPage JSON-LD, breadcrumbs — is generated for you. Do not
+ * add meta tags here. If you find yourself wanting to, the layout is being
+ * worked around, and the next page will get it wrong.
+ *
+ *
+ * `pageType` sets the schema.org type for the WebPage node:
+ *   'WebPage'         default
+ *   'ProfilePage'     about / bio
+ *   'CollectionPage'  an index listing other pages
+ *   'ContactPage'     contact
+ *
+ * `heading` is the page's single <h1>. Never write an <h1> in the body — the
+ * layout owns it, which is what makes "exactly one H1" structural rather than
+ * a rule someone has to remember.
+ *
+ * `lede` is the optional standfirst. Answer the page's question there.
+ */
+import PageLayout from '../layouts/PageLayout.astro';
+---
+
+<PageLayout
+  seo={{
+    title: '',
+    description: '',
+  }}
+  pageType="WebPage"
+  heading=""
+  lede=""
+>
+  {/*
+    Open by answering what the page is for, in the first paragraph. Same reason
+    as articles: it is the part most likely to be read, quoted, or extracted.
+
+    Every <section> carries a heading — if it would not warrant one, it is a
+    <div>. Headings descend one level at a time, and the layout's <h1> means
+    the first heading here is an <h2>.
+
+    Wrap rendered prose in `.prose`. Page chrome does not get it.
+  */}
+  <section aria-labelledby="first-section" class="mt-12">
+    <h2 id="first-section" class="text-xl font-semibold text-ink">Section heading</h2>
+
+    <div class="prose mt-4">
+      <p>Body copy.</p>
+    </div>
+  </section>
+
+  {/*
+    Link to at least two other pages from here, and link TO this page from two
+    others. tests/seo/links.spec.ts fails the build on orphaned or
+    weakly-linked pages; deliberate exceptions go in ORPHAN_ALLOWLIST.
+  */}
+</PageLayout>

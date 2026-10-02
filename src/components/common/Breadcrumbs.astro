@@ -1,0 +1,44 @@
+---
+/**
+ * Visible breadcrumb trail.
+ *
+ * Receives the SAME array that `BaseLayout` feeds to `buildBreadcrumbList`,
+ * which is what guarantees the BreadcrumbList structured data describes a
+ * trail the user can actually see rather than an invented one.
+ */
+import type { BreadcrumbItem } from '../../utils/schema';
+
+interface Props {
+  items: readonly BreadcrumbItem[];
+}
+
+const { items } = Astro.props;
+const lastIndex = items.length - 1;
+
+/**
+ * Crumb URLs are absolute because schema.org requires it. Render them as
+ * site-relative hrefs so the markup never carries a hard-coded domain.
+ */
+const toHref = (url: string) => new URL(url).pathname;
+---
+
+<nav aria-label="Breadcrumb" class="mb-8">
+  <ol class="flex flex-wrap items-center gap-x-2 text-sm text-ink-muted">
+    {
+      items.map((item, index) => (
+        <li class="flex items-center gap-x-2">
+          {index === lastIndex ? (
+            <span aria-current="page" class="text-ink">
+              {item.name}
+            </span>
+          ) : (
+            <a href={toHref(item.url)} class="underline underline-offset-2 hover:text-ink">
+              {item.name}
+            </a>
+          )}
+          {index !== lastIndex && <span aria-hidden="true">/</span>}
+        </li>
+      ))
+    }
+  </ol>
+</nav>

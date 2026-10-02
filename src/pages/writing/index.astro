@@ -1,0 +1,34 @@
+---
+/**
+ * The full catalogue.
+ *
+ * Same component as the homepage field, given every article instead of the
+ * featured slice. Reusing it rather than writing a second list is the point:
+ * two listings drift, and the one nobody looks at is the one that rots.
+ */
+import PageLayout from '../../layouts/PageLayout.astro';
+import CardCatalog from '../../components/writing/CardCatalog.astro';
+import { getPublishedArticles } from '../../utils/collections';
+
+const articles = await getPublishedArticles();
+---
+
+<PageLayout
+  seo={{
+    title: 'Writing — Bryce DeCora',
+    description:
+      'Articles on building AI sales systems, web architecture, and the engineering decisions behind the products I work on.',
+  }}
+  pageType="CollectionPage"
+  heading="Writing"
+  lede="Notes on building software, and on the decisions that turned out to matter."
+  width="wide"
+>
+  {
+    articles.length === 0 ? (
+      <p class="text-ink-muted">Nothing published yet.</p>
+    ) : (
+      <CardCatalog articles={articles} headingLevel={2} class="mt-12" />
+    )
+  }
+</PageLayout>

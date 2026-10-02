@@ -1,0 +1,78 @@
+---
+/**
+ * The homepage -- the display register at full volume. See DESIGN.md.
+ *
+ * The featured field is the card catalog: writing as index cards you sift
+ * through by topic. The angles are static state rather than animation, and the
+ * filter is a radio group plus `:has()` -- no JavaScript. See
+ * components/writing/CardCatalog.astro.
+ */
+import PageLayout from '../layouts/PageLayout.astro';
+import PanelField from '../components/ui/PanelField.astro';
+import CardCatalog from '../components/writing/CardCatalog.astro';
+import BrewColumn from '../components/ui/BrewColumn.astro';
+import { getPublishedArticles } from '../utils/collections';
+
+/*
+ * The featured field shows the whole catalogue while it is small enough to
+ * sift in one view. Past FEATURED_LIMIT the pile stops being browsable and
+ * /writing/ becomes the place to sift; the link below is always present.
+ */
+const FEATURED_LIMIT = 8;
+const allArticles = await getPublishedArticles();
+const articles = allArticles.slice(0, FEATURED_LIMIT);
+
+/*
+ * The hero tagline, written here rather than pulled from
+ * `person.description`. The two serve different jobs: this is voice, and
+ * the entity description is the factual line feeding the Person and WebSite
+ * JSON-LD. Collapsing them into one string would force one of the two to be
+ * wrong.
+ */
+const tagline =
+  'Co-founder & CEO of CloseBot, family man, developer, ex-Boeing, AI before it was cool, coffee lover.';
+
+---
+
+<PageLayout
+  seo={{
+    title: 'Bryce DeCora — Building AI Sales Systems',
+    description:
+      'Founder of CloseBot. I build AI systems that handle sales conversations, and write about the engineering decisions behind them.',
+  }}
+  heading="Bryce DeCora"
+  kicker="Co-founder / CloseBot"
+  lede={tagline}
+  register="display"
+  width="full"
+>
+  {/*
+    On the homepage the column is a fixture rather than a progress indicator,
+    so it runs the whole cycle slowly on a loop instead of following scroll.
+  */}
+  <BrewColumn loop slot="hero-aside" />
+
+  <PanelField>
+    <section aria-labelledby="writing-heading">
+      <h2 id="writing-heading" class="text-title text-field-ink">The catalogue</h2>
+      <p class="text-small mt-3 max-w-content text-field-ink opacity-80">
+        Notes on building software, and on the decisions that turned out to
+        matter. Pull a drawer to sift by topic.
+      </p>
+
+      <div class="mt-10">
+        <CardCatalog articles={articles} />
+      </div>
+
+      <p class="mt-12">
+        <a
+          href="/writing/"
+          class="kicker text-field-ink underline decoration-field-ink underline-offset-4 hover:decoration-2"
+        >
+          All writing
+        </a>
+      </p>
+    </section>
+  </PanelField>
+
+</PageLayout>

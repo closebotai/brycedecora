@@ -1,0 +1,137 @@
+---
+import { Image } from 'astro:assets';
+import { getEntries, render } from 'astro:content';
+
+import ArticleLayout from '../../layouts/ArticleLayout.astro';
+import { articleOgImage, articleOgImageAlt } from '../../data/site';
+import { articlePath, entrySeoTitle, getPublishedArticles, type Article } from '../../utils/collections';
+
+export async function getStaticPaths() {
+  const articles = await getPublishedArticles();
+  return articles.map((article) => ({
+    params: { slug: article.id },
+    props: { article },
+  }));
+}
+
+type Props = { article: Article };
+
+const { article } = Astro.props;
+const { Content } = await render(article);
+
+/**
+ * Related links come from the content model (`relatedArticles` frontmatter),
+ * not from whatever this template decides to link to. `reference()` in the
+ * collection schema already guaranteed each of these entries exists, so these
+ * links cannot 404.
+ */
+const related = await getEntries(article.data.relatedArticles);
+
+/**
+ * The article's share image, in preference order.
+ *
+ * 1. `cover`, when the article has one — a real photograph or diagram beats a
+ *    typographic card, and `cover.src` is the post-optimisation path Astro
+ *    emits.
+ * 2. Otherwise the article's own generated card, titled with its `<h1>`. Every
+ *    published article has one; `pnpm og` writes them and
+ *    `tests/seo/og-cards.spec.ts` fails if one is missing or stale.
+ *
+ * The site-wide default is deliberately NOT in this list. It was the fallback
+ * before per-article cards existed, and reaching it now would mean a card is
+ * missing — which should fail the build, not degrade quietly into every
+ * article sharing one identical preview.
+ */
+const ogImage = article.data.cover?.src ?? articleOgImage(article.id);
+const ogImageAlt = article.data.cover
+  ? article.data.coverAlt
+  : articleOgImageAlt(article.data.title);
+
+/**
+ * Absolute image URL for the Article JSON-LD.
+ *
+ * Google lists `image` among Article's recommended properties. It resolves to
+ * the same URL as `og:image`, which keeps the structured data and the social
+ * card describing the same picture rather than disagreeing.
+ */
+const imageUrl = new URL(ogImage, Astro.site).href;
+---
+
+<ArticleLayout
+  seo={{
+    title: entrySeoTitle(article.data),
+    description: article.data.description,
+    openGraph: {
+      type: 'article',
+      image: ogImage,
+      imageAlt: ogImageAlt,
+      /*
+        A cover is whatever size it was authored at, so it carries its own
+        dimensions. Letting it inherit the card default would declare
+        1200x630 for an image that is not, and a crawler believes the tag
+        over the file. A generated card omits these and takes the default.
+      */
+      ...(article.data.cover
+        ? { imageWidth: article.data.cover.width, imageHeight: article.data.cover.height }
+        : {}),
+    },
+  }}
+  heading={article.data.title}
+  datePublished={article.data.pubDate}
+  dateModified={article.data.updatedDate}
+  tags={article.data.tags}
+  imageUrl={imageUrl}
+>
+  {
+    /*
+      The cover is the LCP element when present, so it is loaded eagerly with
+      high fetch priority -- never lazily. `widths` + `sizes` give Astro what
+      it needs to emit a responsive srcset in modern formats; width and height
+      come from the ImageMetadata automatically, which is what prevents layout
+      shift.
+
+      No border radius: DESIGN.md permits 0 everywhere except the focus ring.
+
+      This is also the only EAGER image an article has, which is what makes the
+      cover the only safe home for an article's first picture. Markdown emits
+      loading="lazy" unconditionally, and tests/seo/images.spec.ts fails a page
+      whose first <img> is lazy -- so a body image in a coverless article
+      breaks the build. The media library's "Use as cover" exists for that.
+    */
+    article.data.cover && (
+      <Image
+        src={article.data.cover}
+        alt={article.data.coverAlt ?? ''}
+        widths={[480, 800, 1200]}
+        sizes="(max-width: 42rem) 100vw, 42rem"
+        loading="eager"
+        fetchpriority="high"
+        class="mb-8"
+      />
+    )
+  }
+
+  <Content />
+
+  {
+    related.length > 0 && (
+      <section slot="related" aria-labelledby="related-heading" class="mt-16 border-t border-line pt-8">
+        <h2 id="related-heading" class="text-lg font-semibold text-ink">
+          Related reading
+        </h2>
+        <ul class="mt-4 space-y-2">
+          {related.map((entry) => (
+            <li>
+              <a
+                href={articlePath(entry.id)}
+                class="text-accent no-underline hover:text-accent-hover"
+              >
+                {entry.data.title}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+</ArticleLayout>

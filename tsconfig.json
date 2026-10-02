@@ -1,0 +1,22 @@
+{
+  "extends": "astro/tsconfigs/strict",
+  // `.astro` must NOT be excluded: .astro/types.d.ts is what pulls in the
+  // generated content-collection types. Excluding the directory cancels the
+  // explicit include above, and every CollectionEntry silently becomes `any`.
+  "include": [".astro/types.d.ts", "**/*.ts", "**/*.tsx", "**/*.astro"],
+  // `templates` holds scaffolds to copy, not source. They reference paths that
+  // are only correct once copied into src/, so type-checking them in place
+  // reports errors that are not real.
+  "exclude": ["dist", "node_modules", "templates"],
+  "compilerOptions": {
+    "strictNullChecks": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "verbatimModuleSyntax": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  }
+}

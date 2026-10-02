@@ -1,0 +1,62 @@
+---
+/**
+ * The entire <head> SEO surface, in one place.
+ *
+ * Pages never write meta tags. They supply data (`title`, `description`) to
+ * BaseLayout, which resolves it and renders this component. That is why a new
+ * page cannot ship without a canonical tag or an Open Graph image: it was
+ * never the page's job to remember them.
+ */
+import type { ResolvedSeo } from '../../schemas/seo';
+import { DEFAULT_LOCALE, SITE_NAME } from '../../data/site';
+import type { JsonLdNode } from '../../utils/schema';
+import StructuredData from './StructuredData.astro';
+
+interface Props {
+  seo: ResolvedSeo;
+  schema: readonly JsonLdNode[];
+}
+
+const { seo, schema } = Astro.props;
+
+const robots = [
+  seo.robots.index ? 'index' : 'noindex',
+  seo.robots.follow ? 'follow' : 'nofollow',
+].join(', ');
+---
+
+{/*
+  The title is rendered exactly as authored -- no " | Site Name" suffix is
+  appended. Appending one would push every title past the length guardrail the
+  schema enforces, making that guardrail describe something other than what
+  ships. Put the brand in the title when the title warrants it.
+*/}
+<title>{seo.title}</title>
+<meta name="description" content={seo.description} />
+
+{/* Absent only on the 404 page -- see `noCanonical` in src/schemas/seo.ts. */}
+{seo.canonical && <link rel="canonical" href={seo.canonical} />}
+<meta name="robots" content={robots} />
+
+<meta property="og:site_name" content={SITE_NAME} />
+<meta property="og:locale" content={DEFAULT_LOCALE} />
+<meta property="og:type" content={seo.openGraph.type} />
+<meta property="og:title" content={seo.openGraph.title} />
+<meta property="og:description" content={seo.openGraph.description} />
+<meta property="og:url" content={seo.openGraph.url} />
+<meta property="og:image" content={seo.openGraph.image} />
+<meta property="og:image:alt" content={seo.openGraph.imageAlt} />
+{/*
+  Dimensions let a crawler reserve the box before it has fetched the image.
+  Without them Slack and X lay the unfurl out twice and the preview jumps.
+*/}
+<meta property="og:image:width" content={String(seo.openGraph.imageWidth)} />
+<meta property="og:image:height" content={String(seo.openGraph.imageHeight)} />
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={seo.openGraph.title} />
+<meta name="twitter:description" content={seo.openGraph.description} />
+<meta name="twitter:image" content={seo.openGraph.image} />
+<meta name="twitter:image:alt" content={seo.openGraph.imageAlt} />
+
+<StructuredData nodes={schema} />
