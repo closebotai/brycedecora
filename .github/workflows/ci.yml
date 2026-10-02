@@ -12,6 +12,22 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# LEAST PRIVILEGE, STATED RATHER THAN INHERITED.
+#
+# Without this block the job gets whatever the repository default is, which on
+# a public repo is a token a stranger's pull request can inherit. Nothing here
+# writes to the repo -- it checks, builds and tests -- so read access to the
+# contents is the whole requirement.
+#
+# The trigger above is `pull_request`, NOT `pull_request_target`. That
+# distinction is the one that matters once this repo is public:
+# `pull_request_target` would run a fork's code against the BASE repo's
+# secrets and a writable token, which is the standard way public repos get
+# compromised. `pull_request` runs it isolated, read-only, with no secrets.
+# Do not "fix" a fork PR that cannot see a variable by switching triggers.
+permissions:
+  contents: read
+
 # The CloseBot widget's account id. A *variable*, not a secret -- it is served
 # to every visitor inside a <script src>, so it is public by construction. It
 # is set here only so CI builds the same pages production does; without it the
